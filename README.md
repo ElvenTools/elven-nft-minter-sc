@@ -2,6 +2,8 @@
 
 **Please test it before using it for the real stuff. It can always be buggy. Not reviewed in any form and not tested in the mainnet! Still work in progress!**
 
+Based on official [nft-minter](https://github.com/ElrondNetwork/elrond-wasm-rs/tree/master/contracts/examples/nft-minter) example.
+
 ### Pre requirements:
 
 1. Installed the latest version of [erdpy](https://docs.elrond.com/sdk-and-tools/erdpy/installing-erdpy/)
