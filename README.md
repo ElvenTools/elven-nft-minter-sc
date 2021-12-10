@@ -40,7 +40,7 @@ arguments:
 
 ([elrond-converters](http://207.244.241.38/elrond-converters/))
 
-In return, you will get a token identifier (in hex) that you need to use in the elven-minter tool.
+In return, you will get a token identifier (in hex) that you need to use in the elven-minter tool. **Find it in the explorer: [example](https://devnet-explorer.elrond.com/transactions/76871f78c44299c0ced90e3bd818235918fc56bc2f8ebe1536e4641acfaa3ce9). It is located under SC results, here: `@00@454c55572d336135646363` where hex value 454c55572d336135646363 is in fact ELUW-3a5dcc. And this is what we need. It is what we need to pass in the elven-mint config. It is a collection (ESDT token).**
 
 6. Add special roles
 
