@@ -1,4 +1,4 @@
-### Example Smart Contract to be used with [elven-mint](https://github.com/juliancwirko/elven-tools)
+### Example Smart Contract to be used with [elven-mint](https://github.com/juliancwirko/elven-mint)
 
 **Please test it before using it for the real stuff. It can always be buggy. Not reviewed in any form and not tested in the mainnet! Still work in progress!**
 
