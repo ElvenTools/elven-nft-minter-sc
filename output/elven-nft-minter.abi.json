@@ -1,0 +1,138 @@
+{
+    "buildInfo": {
+        "rustc": {
+            "version": "1.54.0-nightly",
+            "commitHash": "f58631b4503b5cd34163cf9c3ff19dc3e0c8a09e",
+            "commitDate": "2021-05-28",
+            "channel": "Nightly",
+            "short": "rustc 1.54.0-nightly (f58631b45 2021-05-28)"
+        },
+        "contractCrate": {
+            "name": "elven-nft-minter",
+            "version": "0.1.0"
+        },
+        "framework": {
+            "name": "elrond-wasm",
+            "version": "0.24.0"
+        }
+    },
+    "name": "ElvenTools",
+    "constructor": {
+        "inputs": [],
+        "outputs": []
+    },
+    "endpoints": [
+        {
+            "name": "issueToken",
+            "onlyOwner": true,
+            "mutability": "mutable",
+            "payableInTokens": [
+                "EGLD"
+            ],
+            "inputs": [
+                {
+                    "name": "token_name",
+                    "type": "bytes"
+                },
+                {
+                    "name": "token_ticker",
+                    "type": "bytes"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "setLocalRoles",
+            "onlyOwner": true,
+            "mutability": "mutable",
+            "inputs": [],
+            "outputs": []
+        },
+        {
+            "name": "createNft",
+            "onlyOwner": true,
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "token",
+                    "type": "TokenIdentifier"
+                },
+                {
+                    "name": "name",
+                    "type": "bytes"
+                },
+                {
+                    "name": "uri",
+                    "type": "bytes"
+                },
+                {
+                    "name": "attributes",
+                    "type": "bytes"
+                },
+                {
+                    "name": "hash",
+                    "type": "bytes"
+                },
+                {
+                    "name": "royalties",
+                    "type": "BigUint"
+                },
+                {
+                    "name": "selling_price",
+                    "type": "BigUint"
+                },
+                {
+                    "name": "with_claim",
+                    "type": "optional<bool>",
+                    "multi_arg": true
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "u64"
+                }
+            ]
+        },
+        {
+            "name": "buyNft",
+            "mutability": "mutable",
+            "payableInTokens": [
+                "EGLD"
+            ],
+            "inputs": [
+                {
+                    "name": "nft_nonce",
+                    "type": "u64"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "getNftTokenId",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "TokenIdentifier"
+                }
+            ]
+        },
+        {
+            "name": "getNftPrice",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "nft_nonce",
+                    "type": "u64"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "BigUint"
+                }
+            ]
+        }
+    ],
+    "hasCallback": true,
+    "types": {}
+}
