@@ -11,6 +11,8 @@ Based on official [nft-minter](https://github.com/ElrondNetwork/elrond-wasm-rs/t
 
 ### Usage (devnet):
 
+**You can also use [elven-tools-cli](https://github.com/juliancwirko/elven-tools-cli) for that!**
+
 1. Clone the repo
 
 2. `cd elven-nft-minter-sc`
