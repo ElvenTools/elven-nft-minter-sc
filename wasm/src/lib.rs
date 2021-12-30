@@ -9,11 +9,13 @@ elrond_wasm_node::wasm_endpoints! {
     (
         init
         callBack
-        buyNft
-        createNft
         getNftPrice
         getNftTokenId
+        getNftTokenName
         issueToken
+        mintNft
+        provenanceHash
         setLocalRoles
+        shuffle
     )
 }

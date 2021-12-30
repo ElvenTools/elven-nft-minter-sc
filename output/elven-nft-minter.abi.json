@@ -9,16 +9,50 @@
         },
         "contractCrate": {
             "name": "elven-nft-minter",
-            "version": "0.1.0"
+            "version": "0.2.0"
         },
         "framework": {
             "name": "elrond-wasm",
-            "version": "0.24.0"
+            "version": "0.25.0"
         }
     },
     "name": "ElvenTools",
     "constructor": {
-        "inputs": [],
+        "inputs": [
+            {
+                "name": "image_base_cid",
+                "type": "bytes"
+            },
+            {
+                "name": "metadata_base_cid",
+                "type": "bytes"
+            },
+            {
+                "name": "number_of_tokens",
+                "type": "u32"
+            },
+            {
+                "name": "start_timestamp",
+                "type": "u64"
+            },
+            {
+                "name": "end_timestamp",
+                "type": "u64"
+            },
+            {
+                "name": "royalties",
+                "type": "BigUint"
+            },
+            {
+                "name": "selling_price",
+                "type": "BigUint"
+            },
+            {
+                "name": "provenance_hash",
+                "type": "optional<bytes>",
+                "multi_arg": true
+            }
+        ],
         "outputs": []
     },
     "endpoints": [
@@ -49,62 +83,18 @@
             "outputs": []
         },
         {
-            "name": "createNft",
-            "onlyOwner": true,
-            "mutability": "mutable",
-            "inputs": [
-                {
-                    "name": "token",
-                    "type": "TokenIdentifier"
-                },
-                {
-                    "name": "name",
-                    "type": "bytes"
-                },
-                {
-                    "name": "uri",
-                    "type": "bytes"
-                },
-                {
-                    "name": "attributes",
-                    "type": "bytes"
-                },
-                {
-                    "name": "hash",
-                    "type": "bytes"
-                },
-                {
-                    "name": "royalties",
-                    "type": "BigUint"
-                },
-                {
-                    "name": "selling_price",
-                    "type": "BigUint"
-                },
-                {
-                    "name": "with_claim",
-                    "type": "optional<bool>",
-                    "multi_arg": true
-                }
-            ],
-            "outputs": [
-                {
-                    "type": "u64"
-                }
-            ]
-        },
-        {
-            "name": "buyNft",
+            "name": "mintNft",
             "mutability": "mutable",
             "payableInTokens": [
                 "EGLD"
             ],
-            "inputs": [
-                {
-                    "name": "nft_nonce",
-                    "type": "u64"
-                }
-            ],
+            "inputs": [],
+            "outputs": []
+        },
+        {
+            "name": "shuffle",
+            "mutability": "mutable",
+            "inputs": [],
             "outputs": []
         },
         {
@@ -118,17 +108,32 @@
             ]
         },
         {
+            "name": "getNftTokenName",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "bytes"
+                }
+            ]
+        },
+        {
             "name": "getNftPrice",
             "mutability": "readonly",
-            "inputs": [
-                {
-                    "name": "nft_nonce",
-                    "type": "u64"
-                }
-            ],
+            "inputs": [],
             "outputs": [
                 {
                     "type": "BigUint"
+                }
+            ]
+        },
+        {
+            "name": "provenanceHash",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "bytes"
                 }
             ]
         }
