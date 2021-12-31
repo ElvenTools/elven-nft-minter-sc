@@ -6,6 +6,12 @@ elrond_wasm::derive_imports!();
 const NFT_AMOUNT: u32 = 1;
 const ROYALTIES_MAX: u32 = 10_000;
 
+#[derive(TypeAbi, TopEncode, TopDecode)]
+pub struct NftAttributes<M: ManagedTypeApi> {
+    pub tags: ManagedBuffer<M>,
+    pub metadata: ManagedBuffer<M>,
+}
+
 #[elrond_wasm::contract]
 pub trait ElvenTools {
     #[init]
@@ -18,6 +24,7 @@ pub trait ElvenTools {
         end_timestamp: u64,
         royalties: BigUint,
         selling_price: BigUint,
+        #[var_args] tags: OptionalArg<ManagedBuffer>,
         #[var_args] provenance_hash: OptionalArg<ManagedBuffer>,
     ) -> SCResult<()> {
         require!(royalties <= ROYALTIES_MAX, "Royalties cannot exceed 100%");
@@ -31,7 +38,8 @@ pub trait ElvenTools {
         self.end_time().set(&end_timestamp);
         self.royalties().set(&royalties);
         self.selling_price().set(&selling_price);
-
+        self.tags().set(&tags.into_option().unwrap_or_default());
+        
         Ok(())
     }
 
@@ -82,10 +90,29 @@ pub trait ElvenTools {
             .async_call())
     }
 
+    #[only_owner]
+    #[endpoint(pauseMinting)]
+    fn pause_minting(&self) -> SCResult<()> {
+      self.paused().set(&true);
+      
+      Ok(())
+    }
+
+    #[only_owner]
+    #[endpoint(resumeMinting)]
+    fn resume_minting(&self) -> SCResult<()> {
+      self.paused().clear();
+      
+      Ok(())
+    }
+
     #[payable("EGLD")]
     #[endpoint(mintNft)]
     fn mint_nft(&self, #[payment_amount] payment_amount: BigUint) -> SCResult<()> {
-        require!(!self.nft_token_id().is_empty(), "Token not issued");
+        require!(self.paused().is_empty(), "The minting is paused");
+        require!(self.nft_token_id().is_empty(), "Token not issued");
+        require!(self.blockchain().get_block_timestamp() >= self.start_time().get(), "The minting haven't started yet");
+        require!(self.blockchain().get_block_timestamp() <= self.end_time().get(), "The minting is over");
 
         let price_tag = self.selling_price().get();
         require!(payment_amount == price_tag, "Invalid amount as payment");
@@ -97,8 +124,24 @@ pub trait ElvenTools {
 
         let royalties = self.royalties().get();
 
-        // TODO: prepare proper attributes
-        let attributes = ManagedBuffer::new();
+        let metadata_key_name = ManagedBuffer::new_from_bytes("metadata:".as_bytes());
+        // TODO: proper file index
+        let metadata_index_file = ManagedBuffer::new_from_bytes("1".as_bytes());
+        let metadata_file_extension = ManagedBuffer::new_from_bytes(".json".as_bytes());
+        let metadata_cid = self.metadata_base_cid().get();
+        let metadata_slash = ManagedBuffer::new_from_bytes("/".as_bytes());
+
+        let mut metadata_concat = ManagedBuffer::new();
+        metadata_concat.append(&metadata_key_name);
+        metadata_concat.append(&metadata_cid);
+        metadata_concat.append(&metadata_slash);
+        metadata_concat.append(&metadata_index_file);
+        metadata_concat.append(&metadata_file_extension);
+        
+        let attributes = NftAttributes {
+          tags: self.tags().get(),
+          metadata: ManagedBuffer::from(metadata_concat),
+        };
 
         // TODO: preapre proper hash from attributes
         let hash = ManagedBuffer::new();
@@ -203,4 +246,10 @@ pub trait ElvenTools {
 
     #[storage_mapper("royalties")]
     fn royalties(&self) -> SingleValueMapper<BigUint>;
+
+    #[storage_mapper("paused")]
+    fn paused(&self) -> SingleValueMapper<bool>;
+
+    #[storage_mapper("additionalAttributes")]
+    fn tags(&self) -> SingleValueMapper<ManagedBuffer>;
 }

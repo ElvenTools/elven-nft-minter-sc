@@ -42,12 +42,14 @@ where
     blockchain_wrapper.execute_tx(&owner_address, &em_wrapper, &rust_zero, |sc| {
         let image_base_cid = ManagedBuffer::<DebugApi>::from(b"imageIpfsCID");
         let metadata_base_cid = ManagedBuffer::<DebugApi>::from(b"metadataIpfsCID");
-        let provenance_hash = OptionalArg::Some(ManagedBuffer::<DebugApi>::from(b"provenanceHash"));
         let number_of_tokens: u32 = 10000;
         let start_timestamp = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs();
         let end_timestamp = &start_timestamp + ONE_WEEK;
         let royalties = BigUint::from(1000 as u32);
         let selling_price = BigUint::from(1000000000000000000 as u64);
+
+        let additional_attributes = OptionalArg::Some(ManagedBuffer::<DebugApi>::from(b"tags:tag1,tag2"));
+        let provenance_hash = OptionalArg::Some(ManagedBuffer::<DebugApi>::from(b"provenanceHash"));
 
         let result = sc.init(
           image_base_cid,
@@ -57,6 +59,7 @@ where
           end_timestamp,
           royalties,
           selling_price,
+          additional_attributes,
           provenance_hash,
         );
         assert_eq!(result, SCResult::Ok(()));

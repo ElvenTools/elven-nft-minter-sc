@@ -14,7 +14,9 @@ elrond_wasm_node::wasm_endpoints! {
         getNftTokenName
         issueToken
         mintNft
+        pauseMinting
         provenanceHash
+        resumeMinting
         setLocalRoles
         shuffle
     )

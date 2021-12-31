@@ -48,6 +48,11 @@
                 "type": "BigUint"
             },
             {
+                "name": "tags",
+                "type": "optional<bytes>",
+                "multi_arg": true
+            },
+            {
                 "name": "provenance_hash",
                 "type": "optional<bytes>",
                 "multi_arg": true
@@ -77,6 +82,20 @@
         },
         {
             "name": "setLocalRoles",
+            "onlyOwner": true,
+            "mutability": "mutable",
+            "inputs": [],
+            "outputs": []
+        },
+        {
+            "name": "pauseMinting",
+            "onlyOwner": true,
+            "mutability": "mutable",
+            "inputs": [],
+            "outputs": []
+        },
+        {
+            "name": "resumeMinting",
             "onlyOwner": true,
             "mutability": "mutable",
             "inputs": [],
