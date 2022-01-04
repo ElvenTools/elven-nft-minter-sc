@@ -6,14 +6,6 @@ elrond_wasm::derive_imports!();
 const NFT_AMOUNT: u32 = 1;
 const ROYALTIES_MAX: u32 = 10_000;
 
-use elrond_wasm::elrond_codec::TopEncode;
-
-#[derive(TopEncode, TopDecode, TypeAbi)]
-pub struct NftAttributes<M: ManagedTypeApi> {
-    pub tags: ManagedBuffer<M>,
-    pub metadata: ManagedBuffer<M>,
-}
-
 #[elrond_wasm::contract]
 pub trait ElvenTools {
     #[init]
@@ -30,18 +22,22 @@ pub trait ElvenTools {
         #[var_args] provenance_hash: OptionalArg<ManagedBuffer>,
     ) -> SCResult<()> {
         require!(royalties <= ROYALTIES_MAX, "Royalties cannot exceed 100%");
-        require!(start_timestamp < end_timestamp, "Start timestamp should be before the end timestamp");
+        require!(
+            start_timestamp < end_timestamp,
+            "Start timestamp should be before the end timestamp"
+        );
 
         self.image_base_cid().set(&image_base_cid);
         self.metadata_base_cid().set(&metadata_base_cid);
         self.number_of_tokens().set(&number_of_tokens);
-        self.provenance_hash().set(&provenance_hash.into_option().unwrap_or_default());
+        self.provenance_hash()
+            .set(&provenance_hash.into_option().unwrap_or_default());
         self.start_time().set(&start_timestamp);
         self.end_time().set(&end_timestamp);
         self.royalties().set(&royalties);
         self.selling_price().set(&selling_price);
         self.tags().set(&tags.into_option().unwrap_or_default());
-        
+
         Ok(())
     }
 
@@ -95,17 +91,17 @@ pub trait ElvenTools {
     #[only_owner]
     #[endpoint(pauseMinting)]
     fn pause_minting(&self) -> SCResult<()> {
-      self.paused().set(&true);
-      
-      Ok(())
+        self.paused().set(&true);
+
+        Ok(())
     }
 
     #[only_owner]
     #[endpoint(resumeMinting)]
     fn resume_minting(&self) -> SCResult<()> {
-      self.paused().clear();
-      
-      Ok(())
+        self.paused().clear();
+
+        Ok(())
     }
 
     #[payable("EGLD")]
@@ -113,8 +109,14 @@ pub trait ElvenTools {
     fn mint_nft(&self, #[payment_amount] payment_amount: BigUint) -> SCResult<()> {
         require!(self.paused().is_empty(), "The minting is paused");
         require!(!self.nft_token_id().is_empty(), "Token not issued");
-        require!(self.blockchain().get_block_timestamp() >= self.start_time().get(), "The minting haven't started yet");
-        require!(self.blockchain().get_block_timestamp() <= self.end_time().get(), "The minting is over");
+        require!(
+            self.blockchain().get_block_timestamp() >= self.start_time().get(),
+            "The minting haven't started yet"
+        );
+        require!(
+            self.blockchain().get_block_timestamp() <= self.end_time().get(),
+            "The minting is over"
+        );
 
         let price_tag = self.selling_price().get();
         require!(payment_amount == price_tag, "Invalid amount as payment");
@@ -126,31 +128,34 @@ pub trait ElvenTools {
 
         let royalties = self.royalties().get();
 
-        // TODO: proper file index
+        /*
+        TODO: proper file index
+        */
+        let metadata_key_name = ManagedBuffer::new_from_bytes("metadata:".as_bytes());
         let metadata_index_file = ManagedBuffer::new_from_bytes("1".as_bytes());
         let metadata_file_extension = ManagedBuffer::new_from_bytes(".json".as_bytes());
         let metadata_cid = self.metadata_base_cid().get();
+        let separator = ManagedBuffer::new_from_bytes(";".as_bytes());
         let metadata_slash = ManagedBuffer::new_from_bytes("/".as_bytes());
+        let tags_key_name = ManagedBuffer::new_from_bytes("tags:".as_bytes());
 
-        let mut metadata_concat = ManagedBuffer::new();
-        metadata_concat.append(&metadata_cid);
-        metadata_concat.append(&metadata_slash);
-        metadata_concat.append(&metadata_index_file);
-        metadata_concat.append(&metadata_file_extension);
-        
-        let attributes = NftAttributes {
-          tags: self.tags().get(),
-          metadata: ManagedBuffer::from(metadata_concat),
-        };
+        let mut attributes = ManagedBuffer::new();
+        attributes.append(&tags_key_name);
+        attributes.append(&self.tags().get());
+        attributes.append(&separator);
+        attributes.append(&metadata_key_name);
+        attributes.append(&metadata_cid);
+        attributes.append(&metadata_slash);
+        attributes.append(&metadata_index_file);
+        attributes.append(&metadata_file_extension);
 
-        let mut serialized_attributes = Vec::new();
-        attributes.top_encode(&mut serialized_attributes)?;
-
-        let attributes_hash = self.crypto().sha256(&serialized_attributes);
+        let attributes_hash = self.crypto().sha256(&attributes.to_boxed_bytes().as_slice());
         let hash_buffer = ManagedBuffer::from(attributes_hash.as_bytes());
-
+        
         let mut uris = ManagedVec::new();
-        // TODO: build proper uris here and for arguments (metadata CID path)
+        /*
+        TODO: build proper uris here and for arguments (metadata CID path)
+        */
         uris.push(ManagedBuffer::new());
 
         let roles = self.blockchain().get_esdt_local_roles(&token);
@@ -192,8 +197,10 @@ pub trait ElvenTools {
 
     #[endpoint(shuffle)]
     fn shuffle(&self) -> SCResult<()> {
-      // TODO:
-      Ok(())
+        /*
+        TODO:
+        */
+        Ok(())
     }
 
     #[callback]
@@ -253,6 +260,6 @@ pub trait ElvenTools {
     #[storage_mapper("paused")]
     fn paused(&self) -> SingleValueMapper<bool>;
 
-    #[storage_mapper("additionalAttributes")]
+    #[storage_mapper("tags")]
     fn tags(&self) -> SingleValueMapper<ManagedBuffer>;
 }
