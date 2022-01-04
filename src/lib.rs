@@ -6,7 +6,9 @@ elrond_wasm::derive_imports!();
 const NFT_AMOUNT: u32 = 1;
 const ROYALTIES_MAX: u32 = 10_000;
 
-#[derive(TypeAbi, TopEncode, TopDecode)]
+use elrond_wasm::elrond_codec::TopEncode;
+
+#[derive(TopEncode, TopDecode, TypeAbi)]
 pub struct NftAttributes<M: ManagedTypeApi> {
     pub tags: ManagedBuffer<M>,
     pub metadata: ManagedBuffer<M>,
@@ -110,7 +112,7 @@ pub trait ElvenTools {
     #[endpoint(mintNft)]
     fn mint_nft(&self, #[payment_amount] payment_amount: BigUint) -> SCResult<()> {
         require!(self.paused().is_empty(), "The minting is paused");
-        require!(self.nft_token_id().is_empty(), "Token not issued");
+        require!(!self.nft_token_id().is_empty(), "Token not issued");
         require!(self.blockchain().get_block_timestamp() >= self.start_time().get(), "The minting haven't started yet");
         require!(self.blockchain().get_block_timestamp() <= self.end_time().get(), "The minting is over");
 
@@ -124,7 +126,6 @@ pub trait ElvenTools {
 
         let royalties = self.royalties().get();
 
-        let metadata_key_name = ManagedBuffer::new_from_bytes("metadata:".as_bytes());
         // TODO: proper file index
         let metadata_index_file = ManagedBuffer::new_from_bytes("1".as_bytes());
         let metadata_file_extension = ManagedBuffer::new_from_bytes(".json".as_bytes());
@@ -132,7 +133,6 @@ pub trait ElvenTools {
         let metadata_slash = ManagedBuffer::new_from_bytes("/".as_bytes());
 
         let mut metadata_concat = ManagedBuffer::new();
-        metadata_concat.append(&metadata_key_name);
         metadata_concat.append(&metadata_cid);
         metadata_concat.append(&metadata_slash);
         metadata_concat.append(&metadata_index_file);
@@ -143,8 +143,11 @@ pub trait ElvenTools {
           metadata: ManagedBuffer::from(metadata_concat),
         };
 
-        // TODO: preapre proper hash from attributes
-        let hash = ManagedBuffer::new();
+        let mut serialized_attributes = Vec::new();
+        attributes.top_encode(&mut serialized_attributes)?;
+
+        let attributes_hash = self.crypto().sha256(&serialized_attributes);
+        let hash_buffer = ManagedBuffer::from(attributes_hash.as_bytes());
 
         let mut uris = ManagedVec::new();
         // TODO: build proper uris here and for arguments (metadata CID path)
@@ -162,7 +165,7 @@ pub trait ElvenTools {
             &amount,
             &token_name,
             &royalties,
-            &hash,
+            &hash_buffer,
             &attributes,
             &uris,
         );
