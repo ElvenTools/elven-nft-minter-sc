@@ -1,6 +1,6 @@
 ### Example Smart Contract to be used with [elven-mint](https://github.com/juliancwirko/elven-mint)
 
-**Please test it before using it for the real stuff. It can always be buggy. Not reviewed in any form and not tested in the mainnet! Still work in progress!**
+**Please test it before using it for the real stuff. It can always be buggy. Not reviewed in any form and not tested in the mainnet! Still work in progress on the development branch!**
 
 Based on official [nft-minter](https://github.com/ElrondNetwork/elrond-wasm-rs/tree/master/contracts/examples/nft-minter) example.
 
