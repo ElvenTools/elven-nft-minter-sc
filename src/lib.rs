@@ -1,10 +1,18 @@
 #![no_std]
 
-elrond_wasm::imports!();
-elrond_wasm::derive_imports!();
-
 const NFT_AMOUNT: u32 = 1;
 const ROYALTIES_MAX: u32 = 10_000;
+const IPFS_GATEWAY_HOST: &[u8] = "https://ipfs.io/ipfs/".as_bytes();
+const IPFS_SCHEME: &[u8] = "ipfs://".as_bytes();
+const METADATA_KEY_NAME: &[u8] = "metadata:".as_bytes();
+const METADATA_FILE_EXTENSION: &[u8] = ".json".as_bytes();
+const ATTR_SEPARATOR: &[u8] = ";".as_bytes();
+const URI_SLASH: &[u8] = "/".as_bytes();
+const TAGS_KEY_NAME: &[u8] = "tags:".as_bytes();
+const IMG_FILE_EXTENSION: &[u8] = ".png".as_bytes();
+
+elrond_wasm::imports!();
+elrond_wasm::derive_imports!();
 
 #[elrond_wasm::contract]
 pub trait ElvenTools {
@@ -128,35 +136,14 @@ pub trait ElvenTools {
 
         let royalties = self.royalties().get();
 
-        /*
-        TODO: proper file index
-        */
-        let metadata_key_name = ManagedBuffer::new_from_bytes("metadata:".as_bytes());
-        let metadata_index_file = ManagedBuffer::new_from_bytes("1".as_bytes());
-        let metadata_file_extension = ManagedBuffer::new_from_bytes(".json".as_bytes());
-        let metadata_cid = self.metadata_base_cid().get();
-        let separator = ManagedBuffer::new_from_bytes(";".as_bytes());
-        let metadata_slash = ManagedBuffer::new_from_bytes("/".as_bytes());
-        let tags_key_name = ManagedBuffer::new_from_bytes("tags:".as_bytes());
+        let attributes = self.build_attributes_buffer();
 
-        let mut attributes = ManagedBuffer::new();
-        attributes.append(&tags_key_name);
-        attributes.append(&self.tags().get());
-        attributes.append(&separator);
-        attributes.append(&metadata_key_name);
-        attributes.append(&metadata_cid);
-        attributes.append(&metadata_slash);
-        attributes.append(&metadata_index_file);
-        attributes.append(&metadata_file_extension);
-
-        let attributes_hash = self.crypto().sha256(&attributes.to_boxed_bytes().as_slice());
+        let attributes_hash = self
+            .crypto()
+            .sha256(&attributes.to_boxed_bytes().as_slice());
         let hash_buffer = ManagedBuffer::from(attributes_hash.as_bytes());
-        
-        let mut uris = ManagedVec::new();
-        /*
-        TODO: build proper uris here and for arguments (metadata CID path)
-        */
-        uris.push(ManagedBuffer::new());
+
+        let uris = self.build_uris_vec();
 
         let roles = self.blockchain().get_esdt_local_roles(&token);
 
@@ -218,6 +205,56 @@ pub trait ElvenTools {
                 }
             }
         }
+    }
+
+    fn build_uris_vec(&self) -> ManagedVec<ManagedBuffer> {
+        let mut uris = ManagedVec::new();
+
+        let cid = self.image_base_cid().get();
+        let uri_slash = ManagedBuffer::new_from_bytes(URI_SLASH);
+        let image_file_extension = ManagedBuffer::new_from_bytes(IMG_FILE_EXTENSION);
+        // TODO: add proper file index
+        let file_index = ManagedBuffer::new_from_bytes("1".as_bytes());
+
+        let mut img_ipfs_gateway_uri = ManagedBuffer::new_from_bytes(IPFS_GATEWAY_HOST);
+        img_ipfs_gateway_uri.append(&cid);
+        img_ipfs_gateway_uri.append(&uri_slash);
+        img_ipfs_gateway_uri.append(&file_index);
+        img_ipfs_gateway_uri.append(&image_file_extension);
+
+        let mut img_ipfs_uri = ManagedBuffer::new_from_bytes(IPFS_SCHEME);
+        img_ipfs_uri.append(&cid);
+        img_ipfs_uri.append(&uri_slash);
+        img_ipfs_uri.append(&file_index);
+        img_ipfs_uri.append(&image_file_extension);
+      
+        uris.push(img_ipfs_gateway_uri);
+        uris.push(img_ipfs_uri);
+
+        uris
+    }
+
+    fn build_attributes_buffer(&self) -> ManagedBuffer {
+        // TODO: proper file index
+        let metadata_key_name = ManagedBuffer::new_from_bytes(METADATA_KEY_NAME);
+        let metadata_index_file = ManagedBuffer::new_from_bytes("1".as_bytes());
+        let metadata_file_extension = ManagedBuffer::new_from_bytes(METADATA_FILE_EXTENSION);
+        let metadata_cid = self.metadata_base_cid().get();
+        let separator = ManagedBuffer::new_from_bytes(ATTR_SEPARATOR);
+        let metadata_slash = ManagedBuffer::new_from_bytes(URI_SLASH);
+        let tags_key_name = ManagedBuffer::new_from_bytes(TAGS_KEY_NAME);
+
+        let mut attributes = ManagedBuffer::new();
+        attributes.append(&tags_key_name);
+        attributes.append(&self.tags().get());
+        attributes.append(&separator);
+        attributes.append(&metadata_key_name);
+        attributes.append(&metadata_cid);
+        attributes.append(&metadata_slash);
+        attributes.append(&metadata_index_file);
+        attributes.append(&metadata_file_extension);
+
+        attributes
     }
 
     #[view(getNftTokenId)]

@@ -1,5 +1,7 @@
 ### Example Smart Contract [WIP]
 
+**Rust devs, I would appreciate it if you could leave your insights ❤️**
+
 ### Pre requirements:
 
 1. Installed the latest version of [erdpy](https://docs.elrond.com/sdk-and-tools/erdpy/installing-erdpy/)

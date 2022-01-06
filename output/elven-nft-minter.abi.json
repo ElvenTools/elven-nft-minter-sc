@@ -2,10 +2,10 @@
     "buildInfo": {
         "rustc": {
             "version": "1.59.0-nightly",
-            "commitHash": "399ba6bb377ce02224b57c4d6e127e160fa76b34",
-            "commitDate": "2022-01-03",
+            "commitHash": "f1ce0e6a00593493a12e0e3662119786c761f375",
+            "commitDate": "2022-01-05",
             "channel": "Nightly",
-            "short": "rustc 1.59.0-nightly (399ba6bb3 2022-01-03)"
+            "short": "rustc 1.59.0-nightly (f1ce0e6a0 2022-01-05)"
         },
         "contractCrate": {
             "name": "elven-nft-minter",
