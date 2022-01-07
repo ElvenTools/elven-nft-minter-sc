@@ -2,10 +2,10 @@
     "buildInfo": {
         "rustc": {
             "version": "1.59.0-nightly",
-            "commitHash": "f1ce0e6a00593493a12e0e3662119786c761f375",
-            "commitDate": "2022-01-05",
+            "commitHash": "cfa4ac66c194046f631ce076c75516ecfdeb77ee",
+            "commitDate": "2022-01-06",
             "channel": "Nightly",
-            "short": "rustc 1.59.0-nightly (f1ce0e6a0 2022-01-05)"
+            "short": "rustc 1.59.0-nightly (cfa4ac66c 2022-01-06)"
         },
         "contractCrate": {
             "name": "elven-nft-minter",
@@ -28,7 +28,7 @@
                 "type": "bytes"
             },
             {
-                "name": "number_of_tokens",
+                "name": "amount_of_tokens",
                 "type": "u32"
             },
             {
@@ -111,10 +111,20 @@
             "outputs": []
         },
         {
-            "name": "shuffle",
+            "name": "shuffleIndex",
             "mutability": "mutable",
             "inputs": [],
             "outputs": []
+        },
+        {
+            "name": "tokensLeft",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "u32"
+                }
+            ]
         },
         {
             "name": "getNftTokenId",

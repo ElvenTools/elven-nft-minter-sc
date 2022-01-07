@@ -1,5 +1,7 @@
 #![no_std]
 
+extern crate alloc;
+
 const NFT_AMOUNT: u32 = 1;
 const ROYALTIES_MAX: u32 = 10_000;
 const IPFS_GATEWAY_HOST: &[u8] = "https://ipfs.io/ipfs/".as_bytes();
@@ -21,7 +23,7 @@ pub trait ElvenTools {
         &self,
         image_base_cid: ManagedBuffer,
         metadata_base_cid: ManagedBuffer,
-        number_of_tokens: u32,
+        amount_of_tokens: u32,
         start_timestamp: u64,
         end_timestamp: u64,
         royalties: BigUint,
@@ -29,15 +31,16 @@ pub trait ElvenTools {
         #[var_args] tags: OptionalArg<ManagedBuffer>,
         #[var_args] provenance_hash: OptionalArg<ManagedBuffer>,
     ) -> SCResult<()> {
-        require!(royalties <= ROYALTIES_MAX, "Royalties cannot exceed 100%");
+        require!(royalties <= ROYALTIES_MAX, "Royalties cannot exceed 100%!");
         require!(
             start_timestamp < end_timestamp,
-            "Start timestamp should be before the end timestamp"
+            "Start timestamp should be before the end timestamp!"
         );
+        require!(amount_of_tokens >= 1, "Amount of tokens to mint should be at least 1!");
 
         self.image_base_cid().set(&image_base_cid);
         self.metadata_base_cid().set(&metadata_base_cid);
-        self.number_of_tokens().set(&number_of_tokens);
+        self.amount_of_tokens().set(&amount_of_tokens);
         self.provenance_hash()
             .set(&provenance_hash.into_option().unwrap_or_default());
         self.start_time().set(&start_timestamp);
@@ -45,6 +48,17 @@ pub trait ElvenTools {
         self.royalties().set(&royalties);
         self.selling_price().set(&selling_price);
         self.tags().set(&tags.into_option().unwrap_or_default());
+
+        let range_end = amount_of_tokens + 1;
+        let range = 1..range_end;
+        let mut index_vec = ManagedVec::new();
+        range.for_each(|value| {
+            index_vec.push(value);
+        });
+        self.indexes_to_mint().set(&index_vec);
+
+        // TODO: enable when shuffle is ready
+        // self.shuffle_indexes();
 
         Ok(())
     }
@@ -58,7 +72,7 @@ pub trait ElvenTools {
         token_name: ManagedBuffer,
         token_ticker: ManagedBuffer,
     ) -> SCResult<AsyncCall> {
-        require!(self.nft_token_id().is_empty(), "Token already issued");
+        require!(self.nft_token_id().is_empty(), "Token already issued!");
 
         Ok(self
             .send()
@@ -83,7 +97,7 @@ pub trait ElvenTools {
     #[only_owner]
     #[endpoint(setLocalRoles)]
     fn set_local_roles(&self) -> SCResult<AsyncCall> {
-        require!(!self.nft_token_id().is_empty(), "Token not issued");
+        require!(!self.nft_token_id().is_empty(), "Token not issued!");
 
         Ok(self
             .send()
@@ -115,16 +129,17 @@ pub trait ElvenTools {
     #[payable("EGLD")]
     #[endpoint(mintNft)]
     fn mint_nft(&self, #[payment_amount] payment_amount: BigUint) -> SCResult<()> {
-        require!(self.paused().is_empty(), "The minting is paused");
-        require!(!self.nft_token_id().is_empty(), "Token not issued");
+        require!(self.paused().is_empty(), "The minting is paused!");
+        require!(!self.nft_token_id().is_empty(), "Token not issued!");
         require!(
             self.blockchain().get_block_timestamp() >= self.start_time().get(),
-            "The minting haven't started yet"
+            "The minting haven't started yet!"
         );
         require!(
             self.blockchain().get_block_timestamp() <= self.end_time().get(),
-            "The minting is over"
+            "The minting is over!"
         );
+        require!(self.tokens_left().unwrap() >= 1, "All tokens have been minted already!");
 
         let price_tag = self.selling_price().get();
         require!(payment_amount == price_tag, "Invalid amount as payment");
@@ -149,7 +164,7 @@ pub trait ElvenTools {
 
         require!(
             roles.has_role(&EsdtLocalRole::NftCreate),
-            "NFTCreate role not set"
+            "NFTCreate role not set!"
         );
 
         let nonce = self.send().esdt_nft_create(
@@ -161,6 +176,8 @@ pub trait ElvenTools {
             &attributes,
             &uris,
         );
+
+        self.remove_first_index_after_mint();
 
         let nft_token_id = self.nft_token_id().get();
         let caller = self.blockchain().get_caller();
@@ -182,11 +199,24 @@ pub trait ElvenTools {
         Ok(())
     }
 
-    #[endpoint(shuffle)]
-    fn shuffle(&self) -> SCResult<()> {
-        /*
-        TODO:
-        */
+    #[endpoint(shuffleIndex)]
+    fn shuffle_index(&self) -> SCResult<()> {
+        // TODO: enable when RandomnessSource is available
+        // let mut indexes = self.indexes_to_mint().get();
+
+        // let indexes_length = indexes.len();
+        // let mut rand_source = RandomnessSource::<Self::Api>::new();
+        // for i in 0..indexes_length {
+        //     let rand_index = rand_source.next_u32_in_range(i, indexes_length);
+        //     let first_item = indexes.get(i).unwrap();
+        //     let second_item = indexes.get(rand_index).unwrap();
+
+        //     indexes.set(i, &second_item);
+        //     indexes.set(rand_index, &first_item);
+        // }
+
+        // self.indexes_to_mint().set(indexes);
+
         Ok(())
     }
 
@@ -208,13 +238,16 @@ pub trait ElvenTools {
     }
 
     fn build_uris_vec(&self) -> ManagedVec<ManagedBuffer> {
+        use alloc::string::ToString;
+
+        let indexes_to_mint = self.indexes_to_mint().get();
+        let first_index_to_mint = indexes_to_mint.get(0).unwrap();
         let mut uris = ManagedVec::new();
 
         let cid = self.image_base_cid().get();
         let uri_slash = ManagedBuffer::new_from_bytes(URI_SLASH);
         let image_file_extension = ManagedBuffer::new_from_bytes(IMG_FILE_EXTENSION);
-        // TODO: add proper file index
-        let file_index = ManagedBuffer::new_from_bytes("1".as_bytes());
+        let file_index = ManagedBuffer::from(first_index_to_mint.to_string().as_bytes());
 
         let mut img_ipfs_gateway_uri = ManagedBuffer::new_from_bytes(IPFS_GATEWAY_HOST);
         img_ipfs_gateway_uri.append(&cid);
@@ -227,7 +260,7 @@ pub trait ElvenTools {
         img_ipfs_uri.append(&uri_slash);
         img_ipfs_uri.append(&file_index);
         img_ipfs_uri.append(&image_file_extension);
-      
+
         uris.push(img_ipfs_gateway_uri);
         uris.push(img_ipfs_uri);
 
@@ -235,9 +268,13 @@ pub trait ElvenTools {
     }
 
     fn build_attributes_buffer(&self) -> ManagedBuffer {
-        // TODO: proper file index
+        use alloc::string::ToString;
+
+        let indexes_to_mint = self.indexes_to_mint().get();
+        let first_index_to_mint = indexes_to_mint.get(0).unwrap();
         let metadata_key_name = ManagedBuffer::new_from_bytes(METADATA_KEY_NAME);
-        let metadata_index_file = ManagedBuffer::new_from_bytes("1".as_bytes());
+        let metadata_index_file =
+            ManagedBuffer::new_from_bytes(first_index_to_mint.to_string().as_bytes());
         let metadata_file_extension = ManagedBuffer::new_from_bytes(METADATA_FILE_EXTENSION);
         let metadata_cid = self.metadata_base_cid().get();
         let separator = ManagedBuffer::new_from_bytes(ATTR_SEPARATOR);
@@ -255,6 +292,19 @@ pub trait ElvenTools {
         attributes.append(&metadata_file_extension);
 
         attributes
+    }
+
+    fn remove_first_index_after_mint(&self) {
+        let mut indexes_left = self.indexes_to_mint().get().into_vec();
+        indexes_left.remove(0);
+        self.indexes_to_mint().set(&ManagedVec::from(indexes_left));
+    }
+
+    #[view(tokensLeft)]
+    fn tokens_left(&self) -> SCResult<usize> {
+        let tokens_left = self.indexes_to_mint().get();
+
+        Ok(tokens_left.len())
     }
 
     #[view(getNftTokenId)]
@@ -279,8 +329,8 @@ pub trait ElvenTools {
     #[storage_mapper("metadaBaseCid")]
     fn metadata_base_cid(&self) -> SingleValueMapper<ManagedBuffer>;
 
-    #[storage_mapper("numberOfTokens")]
-    fn number_of_tokens(&self) -> SingleValueMapper<u32>;
+    #[storage_mapper("amountOfTokens")]
+    fn amount_of_tokens(&self) -> SingleValueMapper<u32>;
 
     #[storage_mapper("startTime")]
     fn start_time(&self) -> SingleValueMapper<u64>;
@@ -288,8 +338,8 @@ pub trait ElvenTools {
     #[storage_mapper("endTime")]
     fn end_time(&self) -> SingleValueMapper<u64>;
 
-    #[storage_mapper("alreadyMintedIndexes")]
-    fn already_minted_indexes(&self, index: u32) -> SingleValueMapper<u32>;
+    #[storage_mapper("indexesToMint")]
+    fn indexes_to_mint(&self) -> SingleValueMapper<ManagedVec<u32>>;
 
     #[storage_mapper("royalties")]
     fn royalties(&self) -> SingleValueMapper<BigUint>;

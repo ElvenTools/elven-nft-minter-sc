@@ -22,3 +22,18 @@ TODO: next steps and description
 ### Learning resources
 
 - [julian.io](https://www.julian.io/)
+
+
+#### TODO:
+
+- shuffle mechanism (RandomnessSource)
+- handle royalties (esdt_nft_create_as_caller), dev rewards (payable)
+- handle mint limit per address
+- tests
+- data checks 
+- comments
+- proper handling of errors - return funds if applicable
+- perf rewrites (help needed)
+
+#### TODO (for later)
+- more advanced functionality in future iterations (bidding, clearing, drops)
