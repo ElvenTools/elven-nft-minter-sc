@@ -13,7 +13,7 @@ elrond_wasm_node::wasm_endpoints! {
         getNftTokenId
         getNftTokenName
         issueToken
-        mintNft
+        mint
         pauseMinting
         provenanceHash
         resumeMinting

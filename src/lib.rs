@@ -36,7 +36,10 @@ pub trait ElvenTools {
             start_timestamp < end_timestamp,
             "Start timestamp should be before the end timestamp!"
         );
-        require!(amount_of_tokens >= 1, "Amount of tokens to mint should be at least 1!");
+        require!(
+            amount_of_tokens >= 1,
+            "Amount of tokens to mint should be at least 1!"
+        );
 
         self.image_base_cid().set(&image_base_cid);
         self.metadata_base_cid().set(&metadata_base_cid);
@@ -127,8 +130,28 @@ pub trait ElvenTools {
     }
 
     #[payable("EGLD")]
-    #[endpoint(mintNft)]
-    fn mint_nft(&self, #[payment_amount] payment_amount: BigUint) -> SCResult<()> {
+    #[endpoint(mint)]
+    fn mint(
+      &self,
+      #[payment_amount] payment_amount: BigUint,
+      #[var_args] token_amount: OptionalArg<u32>,
+    ) -> SCResult<()> {
+        let mut tokens = token_amount.into_option().unwrap_or_default();
+        if (tokens < 1) { tokens = 1 };
+
+        let single_payment_amount = payment_amount / tokens;
+
+        let price_tag = self.selling_price().get();
+        require!(single_payment_amount == price_tag, "Invalid amount as payment"); 
+
+        for _ in 0..tokens {
+            self.mint_single_nft(single_payment_amount.clone()).unwrap();
+        }
+
+        Ok(())
+    }
+
+    fn mint_single_nft(&self, payment_amount: BigUint) -> SCResult<()> {
         require!(self.paused().is_empty(), "The minting is paused!");
         require!(!self.nft_token_id().is_empty(), "Token not issued!");
         require!(
@@ -139,7 +162,10 @@ pub trait ElvenTools {
             self.blockchain().get_block_timestamp() <= self.end_time().get(),
             "The minting is over!"
         );
-        require!(self.tokens_left().unwrap() >= 1, "All tokens have been minted already!");
+        require!(
+            self.tokens_left().unwrap() >= 1,
+            "All tokens have been minted already!"
+        );
 
         let price_tag = self.selling_price().get();
         require!(payment_amount == price_tag, "Invalid amount as payment");

@@ -28,7 +28,8 @@ TODO: next steps and description
 
 - shuffle mechanism (RandomnessSource)
 - handle royalties (esdt_nft_create_as_caller), dev rewards (payable)
-- handle mint limit per address
+- handle mint limit per address + multiple mint
+- giveaway function with multiple mint
 - tests
 - data checks 
 - comments

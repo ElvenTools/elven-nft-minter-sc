@@ -2,10 +2,10 @@
     "buildInfo": {
         "rustc": {
             "version": "1.59.0-nightly",
-            "commitHash": "cfa4ac66c194046f631ce076c75516ecfdeb77ee",
+            "commitHash": "e012a191d768adeda1ee36a99ef8b92d51920154",
             "commitDate": "2022-01-06",
             "channel": "Nightly",
-            "short": "rustc 1.59.0-nightly (cfa4ac66c 2022-01-06)"
+            "short": "rustc 1.59.0-nightly (e012a191d 2022-01-06)"
         },
         "contractCrate": {
             "name": "elven-nft-minter",
@@ -102,12 +102,18 @@
             "outputs": []
         },
         {
-            "name": "mintNft",
+            "name": "mint",
             "mutability": "mutable",
             "payableInTokens": [
                 "EGLD"
             ],
-            "inputs": [],
+            "inputs": [
+                {
+                    "name": "token_amount",
+                    "type": "optional<u32>",
+                    "multi_arg": true
+                }
+            ],
             "outputs": []
         },
         {
