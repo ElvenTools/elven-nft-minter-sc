@@ -52,16 +52,11 @@ pub trait ElvenTools {
         self.selling_price().set(&selling_price);
         self.tags().set(&tags.into_option().unwrap_or_default());
 
-        let range_end = amount_of_tokens + 1;
-        let range = 1..range_end;
-        let mut index_vec = ManagedVec::new();
-        range.for_each(|value| {
-            index_vec.push(value);
-        });
-        self.indexes_to_mint().set(&index_vec);
+        // TODO: enable when shuffle is ready - replace '1' with random index
+        // self.shuffle();
 
-        // TODO: enable when shuffle is ready
-        // self.shuffle_indexes();
+        let first_index = 1;
+        self.next_index_to_mint().set(&first_index);
 
         Ok(())
     }
@@ -132,17 +127,22 @@ pub trait ElvenTools {
     #[payable("EGLD")]
     #[endpoint(mint)]
     fn mint(
-      &self,
-      #[payment_amount] payment_amount: BigUint,
-      #[var_args] token_amount: OptionalArg<u32>,
+        &self,
+        #[payment_amount] payment_amount: BigUint,
+        #[var_args] token_amount: OptionalArg<u32>,
     ) -> SCResult<()> {
         let mut tokens = token_amount.into_option().unwrap_or_default();
-        if (tokens < 1) { tokens = 1 };
+        if (tokens < 1) {
+            tokens = 1
+        };
 
         let single_payment_amount = payment_amount / tokens;
 
         let price_tag = self.selling_price().get();
-        require!(single_payment_amount == price_tag, "Invalid amount as payment"); 
+        require!(
+            single_payment_amount == price_tag,
+            "Invalid amount as payment"
+        );
 
         for _ in 0..tokens {
             self.mint_single_nft(single_payment_amount.clone()).unwrap();
@@ -203,7 +203,8 @@ pub trait ElvenTools {
             &uris,
         );
 
-        self.remove_first_index_after_mint();
+        // Choose next index to mint here (random)
+        self.handle_next_index_setup();
 
         let nft_token_id = self.nft_token_id().get();
         let caller = self.blockchain().get_caller();
@@ -225,23 +226,10 @@ pub trait ElvenTools {
         Ok(())
     }
 
-    #[endpoint(shuffleIndex)]
-    fn shuffle_index(&self) -> SCResult<()> {
+    #[endpoint(shuffle)]
+    fn shuffle(&self) -> SCResult<()> {
         // TODO: enable when RandomnessSource is available
-        // let mut indexes = self.indexes_to_mint().get();
-
-        // let indexes_length = indexes.len();
-        // let mut rand_source = RandomnessSource::<Self::Api>::new();
-        // for i in 0..indexes_length {
-        //     let rand_index = rand_source.next_u32_in_range(i, indexes_length);
-        //     let first_item = indexes.get(i).unwrap();
-        //     let second_item = indexes.get(rand_index).unwrap();
-
-        //     indexes.set(i, &second_item);
-        //     indexes.set(rand_index, &first_item);
-        // }
-
-        // self.indexes_to_mint().set(indexes);
+        // Set next item to mint by random from whole tokens amount left
 
         Ok(())
     }
@@ -263,17 +251,24 @@ pub trait ElvenTools {
         }
     }
 
+    fn handle_next_index_setup(&self) {
+        // TODO: randomize, remove used indexes from randomization - should be done in the shuffle function
+        let minted_index = self.next_index_to_mint().get();
+        self.minted_indexes().insert(minted_index);
+        let next_index = minted_index + 1;
+        self.next_index_to_mint().set(&next_index);
+    }
+
     fn build_uris_vec(&self) -> ManagedVec<ManagedBuffer> {
         use alloc::string::ToString;
 
-        let indexes_to_mint = self.indexes_to_mint().get();
-        let first_index_to_mint = indexes_to_mint.get(0).unwrap();
+        let index_to_mint = self.next_index_to_mint().get();
         let mut uris = ManagedVec::new();
 
         let cid = self.image_base_cid().get();
         let uri_slash = ManagedBuffer::new_from_bytes(URI_SLASH);
         let image_file_extension = ManagedBuffer::new_from_bytes(IMG_FILE_EXTENSION);
-        let file_index = ManagedBuffer::from(first_index_to_mint.to_string().as_bytes());
+        let file_index = ManagedBuffer::from(index_to_mint.to_string().as_bytes());
 
         let mut img_ipfs_gateway_uri = ManagedBuffer::new_from_bytes(IPFS_GATEWAY_HOST);
         img_ipfs_gateway_uri.append(&cid);
@@ -296,11 +291,10 @@ pub trait ElvenTools {
     fn build_attributes_buffer(&self) -> ManagedBuffer {
         use alloc::string::ToString;
 
-        let indexes_to_mint = self.indexes_to_mint().get();
-        let first_index_to_mint = indexes_to_mint.get(0).unwrap();
+        let index_to_mint = self.next_index_to_mint().get();
         let metadata_key_name = ManagedBuffer::new_from_bytes(METADATA_KEY_NAME);
         let metadata_index_file =
-            ManagedBuffer::new_from_bytes(first_index_to_mint.to_string().as_bytes());
+            ManagedBuffer::new_from_bytes(index_to_mint.to_string().as_bytes());
         let metadata_file_extension = ManagedBuffer::new_from_bytes(METADATA_FILE_EXTENSION);
         let metadata_cid = self.metadata_base_cid().get();
         let separator = ManagedBuffer::new_from_bytes(ATTR_SEPARATOR);
@@ -320,17 +314,13 @@ pub trait ElvenTools {
         attributes
     }
 
-    fn remove_first_index_after_mint(&self) {
-        let mut indexes_left = self.indexes_to_mint().get().into_vec();
-        indexes_left.remove(0);
-        self.indexes_to_mint().set(&ManagedVec::from(indexes_left));
-    }
-
     #[view(tokensLeft)]
-    fn tokens_left(&self) -> SCResult<usize> {
-        let tokens_left = self.indexes_to_mint().get();
+    fn tokens_left(&self) -> SCResult<u32> {
+        let minted_tokens = self.minted_indexes().len();
+        let amount_of_tokens = self.amount_of_tokens().get();
+        let left_tokens: u32 = amount_of_tokens - minted_tokens as u32;
 
-        Ok(tokens_left.len())
+        Ok(left_tokens)
     }
 
     #[view(getNftTokenId)]
@@ -364,8 +354,11 @@ pub trait ElvenTools {
     #[storage_mapper("endTime")]
     fn end_time(&self) -> SingleValueMapper<u64>;
 
-    #[storage_mapper("indexesToMint")]
-    fn indexes_to_mint(&self) -> SingleValueMapper<ManagedVec<u32>>;
+    #[storage_mapper("mintedIndexes")]
+    fn minted_indexes(&self) -> SetMapper<u32>;
+
+    #[storage_mapper("nextIndexToMint")]
+    fn next_index_to_mint(&self) -> SingleValueMapper<u32>;
 
     #[storage_mapper("royalties")]
     fn royalties(&self) -> SingleValueMapper<BigUint>;

@@ -117,7 +117,7 @@
             "outputs": []
         },
         {
-            "name": "shuffleIndex",
+            "name": "shuffle",
             "mutability": "mutable",
             "inputs": [],
             "outputs": []
