@@ -24,6 +24,7 @@ pub trait ElvenTools {
         image_base_cid: ManagedBuffer,
         metadata_base_cid: ManagedBuffer,
         amount_of_tokens: u32,
+        tokens_limit_per_address: u32,
         start_timestamp: u64,
         end_timestamp: u64,
         royalties: BigUint,
@@ -40,10 +41,15 @@ pub trait ElvenTools {
             amount_of_tokens >= 1,
             "Amount of tokens to mint should be at least 1!"
         );
+        require!(
+            tokens_limit_per_address >= 1,
+            "Tokens limit per address should be at least 1!"
+        );
 
         self.image_base_cid().set(&image_base_cid);
         self.metadata_base_cid().set(&metadata_base_cid);
         self.amount_of_tokens().set(&amount_of_tokens);
+        self.tokens_limit_per_address().set(&tokens_limit_per_address);
         self.provenance_hash()
             .set(&provenance_hash.into_option().unwrap_or_default());
         self.start_time().set(&start_timestamp);
@@ -131,10 +137,20 @@ pub trait ElvenTools {
         #[payment_amount] payment_amount: BigUint,
         #[var_args] token_amount: OptionalArg<u32>,
     ) -> SCResult<()> {
+        let caller = self.blockchain().get_caller();
         let mut tokens = token_amount.into_option().unwrap_or_default();
-        if (tokens < 1) {
-            tokens = 1
-        };
+
+        let minted_per_address = self.minted_per_address(&caller).get();
+        let tokens_limit_per_address = self.tokens_limit_per_address().get();
+
+        let tokens_left_to_mint = tokens_limit_per_address - minted_per_address;
+
+        if (tokens < 1) { tokens = 1 }
+
+        require!(
+          tokens_left_to_mint >= tokens,
+          "You can't mint such an amount of tokens. Check the limits by one address!"
+        );
 
         let single_payment_amount = payment_amount / tokens;
 
@@ -216,6 +232,8 @@ pub trait ElvenTools {
             &[],
         );
 
+        self.minted_per_address(&caller).update(|sum| *sum += 1);
+       
         let payment_nonce: u64 = 0;
         let payment_token = &TokenIdentifier::egld();
 
@@ -368,4 +386,10 @@ pub trait ElvenTools {
 
     #[storage_mapper("tags")]
     fn tags(&self) -> SingleValueMapper<ManagedBuffer>;
+
+    #[storage_mapper("tokensLimitPerAddress")]
+    fn tokens_limit_per_address(&self) -> SingleValueMapper<u32>;
+
+    #[storage_mapper("mintedPerAddress")]
+    fn minted_per_address(&self, address: &ManagedAddress) -> SingleValueMapper<u32>;
 }

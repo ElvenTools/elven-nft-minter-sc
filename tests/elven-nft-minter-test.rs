@@ -43,6 +43,7 @@ where
         let image_base_cid = ManagedBuffer::<DebugApi>::from(b"imageIpfsCID");
         let metadata_base_cid = ManagedBuffer::<DebugApi>::from(b"metadataIpfsCID");
         let number_of_tokens: u32 = 10000;
+        let tokens_limit_per_address: u32 = 3;
         let start_timestamp = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs();
         let end_timestamp = &start_timestamp + ONE_WEEK;
         let royalties = BigUint::from(1000 as u32);
@@ -55,6 +56,7 @@ where
           image_base_cid,
           metadata_base_cid,
           number_of_tokens,
+          tokens_limit_per_address,
           start_timestamp,
           end_timestamp,
           royalties,

@@ -30,6 +30,7 @@ TODO: next steps and description
 - handle royalties (esdt_nft_create_as_caller), dev rewards (payable)
 - handle mint limit per address + multiple mint
 - giveaway function with multiple mint
+- additional nft roles management (optional with default set)
 - tests
 - data checks 
 - comments
@@ -38,3 +39,4 @@ TODO: next steps and description
 
 #### TODO (for later)
 - more advanced functionality in future iterations (bidding, clearing, drops)
+- rethink usage of ESDTRoleNFTUpdateAttributes and ESDTRoleNFTAddURI

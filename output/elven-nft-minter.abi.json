@@ -32,6 +32,10 @@
                 "type": "u32"
             },
             {
+                "name": "tokens_limit_per_address",
+                "type": "u32"
+            },
+            {
                 "name": "start_timestamp",
                 "type": "u64"
             },

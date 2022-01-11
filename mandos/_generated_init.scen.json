@@ -27,15 +27,17 @@
                     "nonce": "0",
                     "balance": "0",
                     "storage": {
-                        "str:additionalAttributes": "0x746167733a746167312c74616732",
-                        "str:endTime": "0x61dcc878",
+                        "str:amountOfTokens": "0x2710",
+                        "str:endTime": "0x61e72142",
                         "str:iamgeBaseCid": "0x696d61676549706673434944",
                         "str:metadaBaseCid": "0x6d6574616461746149706673434944",
+                        "str:nextIndexToMint": "0x01",
                         "str:nftPrice": "0x0de0b6b3a7640000",
-                        "str:numberOfTokens": "0x2710",
                         "str:provenanceHash": "0x70726f76656e616e636548617368",
                         "str:royalties": "0x03e8",
-                        "str:startTime": "0x61d38df8"
+                        "str:startTime": "0x61dde6c2",
+                        "str:tags": "0x746167733a746167312c74616732",
+                        "str:tokensLimitPerAddress": "0x03"
                     },
                     "code": "file:../output/elven-nft-minter.wasm",
                     "owner": "0x66687aadf862bd776c8fc18b8e9f8e20089714856ee233b3902a591d0d5f2925"
