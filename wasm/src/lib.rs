@@ -12,6 +12,7 @@ elrond_wasm_node::wasm_endpoints! {
         getNftPrice
         getNftTokenId
         getNftTokenName
+        giveaway
         issueToken
         mint
         pauseMinting

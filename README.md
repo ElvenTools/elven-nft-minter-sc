@@ -28,13 +28,12 @@ TODO: next steps and description
 
 - shuffle mechanism (RandomnessSource)
 - handle royalties (esdt_nft_create_as_caller), dev rewards (payable)
-- handle mint limit per address + multiple mint
-- giveaway function with multiple mint
-- additional nft roles management (optional with default set)
+- argument for file extension when deploying
 - tests
 - data checks 
 - comments
 - proper handling of errors - return funds if applicable
+- additional nft roles management (optional with default set)
 - perf rewrites (help needed)
 
 #### TODO (for later)

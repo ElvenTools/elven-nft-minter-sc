@@ -49,7 +49,8 @@ pub trait ElvenTools {
         self.image_base_cid().set(&image_base_cid);
         self.metadata_base_cid().set(&metadata_base_cid);
         self.amount_of_tokens().set(&amount_of_tokens);
-        self.tokens_limit_per_address().set(&tokens_limit_per_address);
+        self.tokens_limit_per_address()
+            .set(&tokens_limit_per_address);
         self.provenance_hash()
             .set(&provenance_hash.into_option().unwrap_or_default());
         self.start_time().set(&start_timestamp);
@@ -130,6 +131,22 @@ pub trait ElvenTools {
         Ok(())
     }
 
+    #[only_owner]
+    #[endpoint(giveaway)]
+    fn giveaway(
+      &self,
+      address: ManagedAddress,
+      amount_of_tokens: u32
+    ) -> SCResult<()> {
+        self.paused().clear();
+
+        for _ in 0..amount_of_tokens {
+          self.mint_single_nft(BigUint::zero(), OptionalArg::Some(address.clone())).unwrap();
+        }
+
+        Ok(())
+    }
+
     #[payable("EGLD")]
     #[endpoint(mint)]
     fn mint(
@@ -145,11 +162,13 @@ pub trait ElvenTools {
 
         let tokens_left_to_mint = tokens_limit_per_address - minted_per_address;
 
-        if (tokens < 1) { tokens = 1 }
+        if (tokens < 1) {
+            tokens = 1
+        }
 
         require!(
-          tokens_left_to_mint >= tokens,
-          "You can't mint such an amount of tokens. Check the limits by one address!"
+            tokens_left_to_mint >= tokens,
+            "You can't mint such an amount of tokens. Check the limits by one address!"
         );
 
         let single_payment_amount = payment_amount / tokens;
@@ -161,13 +180,17 @@ pub trait ElvenTools {
         );
 
         for _ in 0..tokens {
-            self.mint_single_nft(single_payment_amount.clone()).unwrap();
+            self.mint_single_nft(single_payment_amount.clone(), OptionalArg::None).unwrap();
         }
 
         Ok(())
     }
 
-    fn mint_single_nft(&self, payment_amount: BigUint) -> SCResult<()> {
+    fn mint_single_nft(
+      &self,
+      payment_amount: BigUint,
+      #[var_args] giveaway_address: OptionalArg<ManagedAddress>,
+    ) -> SCResult<()> {
         require!(self.paused().is_empty(), "The minting is paused!");
         require!(!self.nft_token_id().is_empty(), "Token not issued!");
         require!(
@@ -184,7 +207,10 @@ pub trait ElvenTools {
         );
 
         let price_tag = self.selling_price().get();
-        require!(payment_amount == price_tag, "Invalid amount as payment");
+
+        if (payment_amount > 0) {
+            require!(payment_amount == price_tag, "Invalid amount as payment");
+        }
 
         let amount = &BigUint::from(NFT_AMOUNT);
 
@@ -222,10 +248,21 @@ pub trait ElvenTools {
         // Choose next index to mint here (random)
         self.handle_next_index_setup();
 
+        let giveaway_address = giveaway_address.into_option().unwrap_or_else(|| ManagedAddress::zero());
+
         let nft_token_id = self.nft_token_id().get();
         let caller = self.blockchain().get_caller();
+
+        let receiver;
+
+        if (giveaway_address.is_zero()) {
+          receiver = &caller;
+        } else {
+          receiver = &giveaway_address;
+        }
+
         self.send().direct(
-            &caller,
+            &receiver,
             &nft_token_id,
             nonce,
             &BigUint::from(NFT_AMOUNT),
@@ -233,13 +270,15 @@ pub trait ElvenTools {
         );
 
         self.minted_per_address(&caller).update(|sum| *sum += 1);
-       
-        let payment_nonce: u64 = 0;
-        let payment_token = &TokenIdentifier::egld();
 
-        let owner = self.blockchain().get_owner_address();
-        self.send()
-            .direct(&owner, &payment_token, payment_nonce, &payment_amount, &[]);
+        if (payment_amount > 0) {
+            let payment_nonce: u64 = 0;
+            let payment_token = &TokenIdentifier::egld();
+
+            let owner = self.blockchain().get_owner_address();
+            self.send()
+                .direct(&owner, &payment_token, payment_nonce, &payment_amount, &[]);
+        }
 
         Ok(())
     }

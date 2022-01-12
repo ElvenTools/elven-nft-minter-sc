@@ -106,6 +106,22 @@
             "outputs": []
         },
         {
+            "name": "giveaway",
+            "onlyOwner": true,
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "address",
+                    "type": "Address"
+                },
+                {
+                    "name": "amount_of_tokens",
+                    "type": "u32"
+                }
+            ],
+            "outputs": []
+        },
+        {
             "name": "mint",
             "mutability": "mutable",
             "payableInTokens": [
