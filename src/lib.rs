@@ -138,8 +138,6 @@ pub trait ElvenTools {
       address: ManagedAddress,
       amount_of_tokens: u32
     ) -> SCResult<()> {
-        self.paused().clear();
-
         for _ in 0..amount_of_tokens {
           self.mint_single_nft(BigUint::zero(), OptionalArg::Some(address.clone())).unwrap();
         }
