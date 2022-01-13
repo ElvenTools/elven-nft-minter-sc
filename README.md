@@ -26,16 +26,16 @@ TODO: next steps and description
 
 #### TODO:
 
-- argument for file extension when deploying
-- shuffle mechanism (RandomnessSource)
-- handle royalties (claim), dev rewards (payable, claim)
+- remove start/stop config when deploying - instead use start endpoint (integrate with presales)
+- drops/presale 
+- shuffle mechanism (RandomnessSource - waits for new elrond-wasm-rs)
 - tests
 - data checks 
-- comments
-- proper handling of errors - return funds if applicable
-- additional nft roles management (optional with default set)
+- comments in the code
+- proper handling of errors - return funds if applicable (???)
+- additional nft roles management (optional with default set) (???)
 - perf rewrites (help needed)
 
 #### TODO (for later)
-- more advanced functionality in future iterations (bidding, clearing, drops)
+- more advanced functionality in future iterations (bidding, clearing)
 - rethink usage of ESDTRoleNFTUpdateAttributes and ESDTRoleNFTAddURI

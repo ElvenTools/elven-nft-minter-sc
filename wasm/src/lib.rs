@@ -9,6 +9,7 @@ elrond_wasm_node::wasm_endpoints! {
     (
         init
         callBack
+        claimScFunds
         getNftPrice
         getNftTokenId
         getNftTokenName

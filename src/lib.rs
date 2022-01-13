@@ -74,6 +74,7 @@ pub trait ElvenTools {
         Ok(())
     }
 
+    // Issue main collection token/handler
     #[only_owner]
     #[payable("EGLD")]
     #[endpoint(issueToken)]
@@ -137,6 +138,7 @@ pub trait ElvenTools {
         Ok(())
     }
 
+    // As an owner of the smart contract, you can send randomly minted NFTs to chosen addresses.
     #[only_owner]
     #[endpoint(giveaway)]
     fn giveaway(&self, address: ManagedAddress, amount_of_tokens: u32) -> SCResult<()> {
@@ -148,6 +150,22 @@ pub trait ElvenTools {
         Ok(())
     }
 
+    // As an owner, claim Smart Contract balance.
+    #[only_owner]
+    #[endpoint(claimScFunds)]
+    fn claim_sc_funds(&self) -> SCResult<()> {
+        self.send().direct_egld(
+            &self.blockchain().get_caller(),
+            &self
+                .blockchain()
+                .get_sc_balance(&TokenIdentifier::egld(), 0),
+            &[],
+        );
+
+        Ok(())
+    }
+
+    // Main mint function - takes the payment sum for all tokens to mint.
     #[payable("EGLD")]
     #[endpoint(mint)]
     fn mint(
@@ -188,6 +206,7 @@ pub trait ElvenTools {
         Ok(())
     }
 
+    // Private single token mint function. It is also used for the giveaway.
     fn mint_single_nft(
         &self,
         payment_amount: BigUint,
