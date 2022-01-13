@@ -52,6 +52,11 @@
                 "type": "BigUint"
             },
             {
+                "name": "file_extension",
+                "type": "optional<bytes>",
+                "multi_arg": true
+            },
+            {
                 "name": "tags",
                 "type": "optional<bytes>",
                 "multi_arg": true

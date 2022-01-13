@@ -26,9 +26,9 @@ TODO: next steps and description
 
 #### TODO:
 
-- shuffle mechanism (RandomnessSource)
-- handle royalties (esdt_nft_create_as_caller), dev rewards (payable)
 - argument for file extension when deploying
+- shuffle mechanism (RandomnessSource)
+- handle royalties (claim), dev rewards (payable, claim)
 - tests
 - data checks 
 - comments

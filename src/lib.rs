@@ -11,7 +11,7 @@ const METADATA_FILE_EXTENSION: &[u8] = ".json".as_bytes();
 const ATTR_SEPARATOR: &[u8] = ";".as_bytes();
 const URI_SLASH: &[u8] = "/".as_bytes();
 const TAGS_KEY_NAME: &[u8] = "tags:".as_bytes();
-const IMG_FILE_EXTENSION: &[u8] = ".png".as_bytes();
+const DEFAULT_IMG_FILE_EXTENSION: &[u8] = ".png".as_bytes();
 
 elrond_wasm::imports!();
 elrond_wasm::derive_imports!();
@@ -29,6 +29,7 @@ pub trait ElvenTools {
         end_timestamp: u64,
         royalties: BigUint,
         selling_price: BigUint,
+        #[var_args] file_extension: OptionalArg<ManagedBuffer>,
         #[var_args] tags: OptionalArg<ManagedBuffer>,
         #[var_args] provenance_hash: OptionalArg<ManagedBuffer>,
     ) -> SCResult<()> {
@@ -58,6 +59,11 @@ pub trait ElvenTools {
         self.royalties().set(&royalties);
         self.selling_price().set(&selling_price);
         self.tags().set(&tags.into_option().unwrap_or_default());
+        self.file_extension().set(
+            &file_extension
+                .into_option()
+                .unwrap_or_else(|| ManagedBuffer::new_from_bytes(DEFAULT_IMG_FILE_EXTENSION)),
+        );
 
         // TODO: enable when shuffle is ready - replace '1' with random index
         // self.shuffle();
@@ -133,13 +139,10 @@ pub trait ElvenTools {
 
     #[only_owner]
     #[endpoint(giveaway)]
-    fn giveaway(
-      &self,
-      address: ManagedAddress,
-      amount_of_tokens: u32
-    ) -> SCResult<()> {
+    fn giveaway(&self, address: ManagedAddress, amount_of_tokens: u32) -> SCResult<()> {
         for _ in 0..amount_of_tokens {
-          self.mint_single_nft(BigUint::zero(), OptionalArg::Some(address.clone())).unwrap();
+            self.mint_single_nft(BigUint::zero(), OptionalArg::Some(address.clone()))
+                .unwrap();
         }
 
         Ok(())
@@ -178,16 +181,17 @@ pub trait ElvenTools {
         );
 
         for _ in 0..tokens {
-            self.mint_single_nft(single_payment_amount.clone(), OptionalArg::None).unwrap();
+            self.mint_single_nft(single_payment_amount.clone(), OptionalArg::None)
+                .unwrap();
         }
 
         Ok(())
     }
 
     fn mint_single_nft(
-      &self,
-      payment_amount: BigUint,
-      #[var_args] giveaway_address: OptionalArg<ManagedAddress>,
+        &self,
+        payment_amount: BigUint,
+        #[var_args] giveaway_address: OptionalArg<ManagedAddress>,
     ) -> SCResult<()> {
         require!(self.paused().is_empty(), "The minting is paused!");
         require!(!self.nft_token_id().is_empty(), "Token not issued!");
@@ -246,7 +250,9 @@ pub trait ElvenTools {
         // Choose next index to mint here (random)
         self.handle_next_index_setup();
 
-        let giveaway_address = giveaway_address.into_option().unwrap_or_else(|| ManagedAddress::zero());
+        let giveaway_address = giveaway_address
+            .into_option()
+            .unwrap_or_else(|| ManagedAddress::zero());
 
         let nft_token_id = self.nft_token_id().get();
         let caller = self.blockchain().get_caller();
@@ -254,9 +260,9 @@ pub trait ElvenTools {
         let receiver;
 
         if (giveaway_address.is_zero()) {
-          receiver = &caller;
+            receiver = &caller;
         } else {
-          receiver = &giveaway_address;
+            receiver = &giveaway_address;
         }
 
         self.send().direct(
@@ -322,7 +328,7 @@ pub trait ElvenTools {
 
         let cid = self.image_base_cid().get();
         let uri_slash = ManagedBuffer::new_from_bytes(URI_SLASH);
-        let image_file_extension = ManagedBuffer::new_from_bytes(IMG_FILE_EXTENSION);
+        let image_file_extension = self.file_extension().get();
         let file_index = ManagedBuffer::from(index_to_mint.to_string().as_bytes());
 
         let mut img_ipfs_gateway_uri = ManagedBuffer::new_from_bytes(IPFS_GATEWAY_HOST);
@@ -399,6 +405,9 @@ pub trait ElvenTools {
 
     #[storage_mapper("metadaBaseCid")]
     fn metadata_base_cid(&self) -> SingleValueMapper<ManagedBuffer>;
+
+    #[storage_mapper("file_extension")]
+    fn file_extension(&self) -> SingleValueMapper<ManagedBuffer>;
 
     #[storage_mapper("amountOfTokens")]
     fn amount_of_tokens(&self) -> SingleValueMapper<u32>;
