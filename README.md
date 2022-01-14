@@ -32,7 +32,6 @@ TODO: next steps and description
 - tests
 - data checks 
 - comments in the code
-- proper handling of errors - return funds if applicable (???)
 - additional nft roles management (optional with default set) (???)
 - perf rewrites (help needed)
 

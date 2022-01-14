@@ -142,6 +142,21 @@ pub trait ElvenTools {
     #[only_owner]
     #[endpoint(giveaway)]
     fn giveaway(&self, address: ManagedAddress, amount_of_tokens: u32) -> SCResult<()> {
+        require!(!self.nft_token_id().is_empty(), "Token not issued!");
+
+        let token = self.nft_token_id().get();
+        let roles = self.blockchain().get_esdt_local_roles(&token);
+
+        require!(
+            roles.has_role(&EsdtLocalRole::NftCreate),
+            "NFTCreate role not set!"
+        );
+
+        require!(
+            self.tokens_left().unwrap() >= amount_of_tokens,
+            "All tokens have been minted already!"
+        );
+      
         for _ in 0..amount_of_tokens {
             self.mint_single_nft(BigUint::zero(), OptionalArg::Some(address.clone()))
                 .unwrap();
@@ -173,8 +188,34 @@ pub trait ElvenTools {
         #[payment_amount] payment_amount: BigUint,
         #[var_args] token_amount: OptionalArg<u32>,
     ) -> SCResult<()> {
-        let caller = self.blockchain().get_caller();
+        require!(self.paused().is_empty(), "The minting is paused!");
+        require!(!self.nft_token_id().is_empty(), "Token not issued!");
+        require!(
+            self.blockchain().get_block_timestamp() >= self.start_time().get(),
+            "The minting haven't started yet!"
+        );
+        require!(
+            self.blockchain().get_block_timestamp() <= self.end_time().get(),
+            "The minting is over!"
+        );
+
+        let token = self.nft_token_id().get();
+
+        let roles = self.blockchain().get_esdt_local_roles(&token);
+
+        require!(
+            roles.has_role(&EsdtLocalRole::NftCreate),
+            "NFTCreate role not set!"
+        );
+
         let mut tokens = token_amount.into_option().unwrap_or_default();
+
+        require!(
+            self.tokens_left().unwrap() >= tokens,
+            "All tokens have been minted already!"
+        );
+
+        let caller = self.blockchain().get_caller();
 
         let minted_per_address = self.minted_per_address(&caller).get();
         let tokens_limit_per_address = self.tokens_limit_per_address().get();
@@ -212,27 +253,6 @@ pub trait ElvenTools {
         payment_amount: BigUint,
         #[var_args] giveaway_address: OptionalArg<ManagedAddress>,
     ) -> SCResult<()> {
-        require!(self.paused().is_empty(), "The minting is paused!");
-        require!(!self.nft_token_id().is_empty(), "Token not issued!");
-        require!(
-            self.blockchain().get_block_timestamp() >= self.start_time().get(),
-            "The minting haven't started yet!"
-        );
-        require!(
-            self.blockchain().get_block_timestamp() <= self.end_time().get(),
-            "The minting is over!"
-        );
-        require!(
-            self.tokens_left().unwrap() >= 1,
-            "All tokens have been minted already!"
-        );
-
-        let price_tag = self.selling_price().get();
-
-        if (payment_amount > 0) {
-            require!(payment_amount == price_tag, "Invalid amount as payment");
-        }
-
         let amount = &BigUint::from(NFT_AMOUNT);
 
         let token = self.nft_token_id().get();
@@ -248,13 +268,6 @@ pub trait ElvenTools {
         let hash_buffer = ManagedBuffer::from(attributes_hash.as_bytes());
 
         let uris = self.build_uris_vec();
-
-        let roles = self.blockchain().get_esdt_local_roles(&token);
-
-        require!(
-            roles.has_role(&EsdtLocalRole::NftCreate),
-            "NFTCreate role not set!"
-        );
 
         let nonce = self.send().esdt_nft_create(
             &token,
@@ -368,6 +381,7 @@ pub trait ElvenTools {
         uris
     }
 
+    // TODO: this can be probably optimized with attributes struct, had problems with decoding on the api side
     fn build_attributes_buffer(&self) -> ManagedBuffer {
         use alloc::string::ToString;
 
