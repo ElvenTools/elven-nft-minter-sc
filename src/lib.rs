@@ -136,6 +136,7 @@ pub trait ElvenTools {
     #[only_owner]
     #[endpoint(setDrop)]
     fn set_drop(&self, amount_of_tokens_per_drop: u32) -> SCResult<()> {
+        self.minted_indexes_by_drop().clear();
         self.amount_of_tokens_per_drop()
             .set(&amount_of_tokens_per_drop);
 
@@ -146,6 +147,7 @@ pub trait ElvenTools {
     #[endpoint(unsetDrop)]
     fn unset_drop(&self) -> SCResult<()> {
         self.amount_of_tokens_per_drop().clear();
+        self.minted_indexes_by_drop().clear();
 
         Ok(())
     }
@@ -166,7 +168,7 @@ pub trait ElvenTools {
 
         require!(
             self.get_current_left_tokens_amount() >= amount_of_tokens,
-            "All tokens have been minted already!"
+            "All tokens have been minted already (totally or per drop)!"
         );
 
         for _ in 0..amount_of_tokens {
@@ -219,7 +221,7 @@ pub trait ElvenTools {
 
         require!(
             self.get_current_left_tokens_amount() >= tokens,
-            "There is not enough tokens to mint left!"
+            "All tokens have been minted already (totally or per drop)!"
         );
 
         let caller = self.blockchain().get_caller();
@@ -357,9 +359,9 @@ pub trait ElvenTools {
         let drop_amount = self.amount_of_tokens_per_drop().get();
         self.minted_indexes().insert(minted_index);
         if (drop_amount > 0) {
-          self.minted_indexes_by_drop().insert(minted_index);
+            self.minted_indexes_by_drop().insert(minted_index);
         }
-        
+
         let next_index = minted_index + 1;
         self.next_index_to_mint().set(&next_index);
     }
@@ -426,10 +428,6 @@ pub trait ElvenTools {
         let paused = true;
         if (drop_amount > 0) {
             tokens_left = self.drop_tokens_left().ok().unwrap_or_default();
-            if (tokens_left <= 0) {
-                self.amount_of_tokens_per_drop().clear();
-                self.minted_indexes_by_drop().clear();
-            }
         } else {
             tokens_left = self.total_tokens_left().ok().unwrap_or_default();
         }
