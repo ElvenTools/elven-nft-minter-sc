@@ -25,8 +25,6 @@ pub trait ElvenTools {
         metadata_base_cid: ManagedBuffer,
         amount_of_tokens: u32,
         tokens_limit_per_address: u32,
-        start_timestamp: u64,
-        end_timestamp: u64,
         royalties: BigUint,
         selling_price: BigUint,
         #[var_args] file_extension: OptionalArg<ManagedBuffer>,
@@ -34,10 +32,6 @@ pub trait ElvenTools {
         #[var_args] provenance_hash: OptionalArg<ManagedBuffer>,
     ) -> SCResult<()> {
         require!(royalties <= ROYALTIES_MAX, "Royalties cannot exceed 100%!");
-        require!(
-            start_timestamp < end_timestamp,
-            "Start timestamp should be before the end timestamp!"
-        );
         require!(
             amount_of_tokens >= 1,
             "Amount of tokens to mint should be at least 1!"
@@ -54,8 +48,6 @@ pub trait ElvenTools {
             .set(&tokens_limit_per_address);
         self.provenance_hash()
             .set(&provenance_hash.into_option().unwrap_or_default());
-        self.start_time().set(&start_timestamp);
-        self.end_time().set(&end_timestamp);
         self.royalties().set(&royalties);
         self.selling_price().set(&selling_price);
         self.tags().set(&tags.into_option().unwrap_or_default());
@@ -64,6 +56,8 @@ pub trait ElvenTools {
                 .into_option()
                 .unwrap_or_else(|| ManagedBuffer::new_from_bytes(DEFAULT_IMG_FILE_EXTENSION)),
         );
+        let paused = true;
+        self.paused().set(&paused);
 
         // TODO: enable when shuffle is ready - replace '1' with random index
         // self.shuffle();
@@ -125,15 +119,33 @@ pub trait ElvenTools {
     #[only_owner]
     #[endpoint(pauseMinting)]
     fn pause_minting(&self) -> SCResult<()> {
-        self.paused().set(&true);
+        let paused = true;
+        self.paused().set(&paused);
 
         Ok(())
     }
 
     #[only_owner]
-    #[endpoint(resumeMinting)]
-    fn resume_minting(&self) -> SCResult<()> {
+    #[endpoint(startMinting)]
+    fn start_minting(&self) -> SCResult<()> {
         self.paused().clear();
+
+        Ok(())
+    }
+
+    #[only_owner]
+    #[endpoint(setDrop)]
+    fn set_drop(&self, amount_of_tokens_per_drop: u32) -> SCResult<()> {
+        self.amount_of_tokens_per_drop()
+            .set(&amount_of_tokens_per_drop);
+
+        Ok(())
+    }
+
+    #[only_owner]
+    #[endpoint(unsetDrop)]
+    fn unset_drop(&self) -> SCResult<()> {
+        self.amount_of_tokens_per_drop().clear();
 
         Ok(())
     }
@@ -153,10 +165,10 @@ pub trait ElvenTools {
         );
 
         require!(
-            self.tokens_left().unwrap() >= amount_of_tokens,
+            self.get_current_left_tokens_amount() >= amount_of_tokens,
             "All tokens have been minted already!"
         );
-      
+
         for _ in 0..amount_of_tokens {
             self.mint_single_nft(BigUint::zero(), OptionalArg::Some(address.clone()))
                 .unwrap();
@@ -188,16 +200,11 @@ pub trait ElvenTools {
         #[payment_amount] payment_amount: BigUint,
         #[var_args] token_amount: OptionalArg<u32>,
     ) -> SCResult<()> {
-        require!(self.paused().is_empty(), "The minting is paused!");
+        require!(
+            self.paused().is_empty(),
+            "The minting is paused or haven't started yet!"
+        );
         require!(!self.nft_token_id().is_empty(), "Token not issued!");
-        require!(
-            self.blockchain().get_block_timestamp() >= self.start_time().get(),
-            "The minting haven't started yet!"
-        );
-        require!(
-            self.blockchain().get_block_timestamp() <= self.end_time().get(),
-            "The minting is over!"
-        );
 
         let token = self.nft_token_id().get();
 
@@ -205,14 +212,14 @@ pub trait ElvenTools {
 
         require!(
             roles.has_role(&EsdtLocalRole::NftCreate),
-            "NFTCreate role not set!"
+            "ESDTNFTCreate role not set!"
         );
 
         let mut tokens = token_amount.into_option().unwrap_or_default();
 
         require!(
-            self.tokens_left().unwrap() >= tokens,
-            "All tokens have been minted already!"
+            self.get_current_left_tokens_amount() >= tokens,
+            "There is not enough tokens to mint left!"
         );
 
         let caller = self.blockchain().get_caller();
@@ -347,7 +354,12 @@ pub trait ElvenTools {
     fn handle_next_index_setup(&self) {
         // TODO: randomize, remove used indexes from randomization - should be done in the shuffle function
         let minted_index = self.next_index_to_mint().get();
+        let drop_amount = self.amount_of_tokens_per_drop().get();
         self.minted_indexes().insert(minted_index);
+        if (drop_amount > 0) {
+          self.minted_indexes_by_drop().insert(minted_index);
+        }
+        
         let next_index = minted_index + 1;
         self.next_index_to_mint().set(&next_index);
     }
@@ -408,8 +420,38 @@ pub trait ElvenTools {
         attributes
     }
 
-    #[view(tokensLeft)]
-    fn tokens_left(&self) -> SCResult<u32> {
+    fn get_current_left_tokens_amount(&self) -> u32 {
+        let drop_amount = self.amount_of_tokens_per_drop().get();
+        let tokens_left;
+        let paused = true;
+        if (drop_amount > 0) {
+            tokens_left = self.drop_tokens_left().ok().unwrap_or_default();
+            if (tokens_left <= 0) {
+                self.amount_of_tokens_per_drop().clear();
+                self.minted_indexes_by_drop().clear();
+            }
+        } else {
+            tokens_left = self.total_tokens_left().ok().unwrap_or_default();
+        }
+
+        if (tokens_left <= 0) {
+            self.paused().set(&paused);
+        }
+
+        tokens_left
+    }
+
+    #[view(dropTokensLeft)]
+    fn drop_tokens_left(&self) -> SCResult<u32> {
+        let minted_tokens = self.minted_indexes_by_drop().len();
+        let amount_of_tokens = self.amount_of_tokens_per_drop().get();
+        let left_tokens: u32 = amount_of_tokens - minted_tokens as u32;
+
+        Ok(left_tokens)
+    }
+
+    #[view(totalTokensLeft)]
+    fn total_tokens_left(&self) -> SCResult<u32> {
         let minted_tokens = self.minted_indexes().len();
         let amount_of_tokens = self.amount_of_tokens().get();
         let left_tokens: u32 = amount_of_tokens - minted_tokens as u32;
@@ -445,14 +487,11 @@ pub trait ElvenTools {
     #[storage_mapper("amountOfTokens")]
     fn amount_of_tokens(&self) -> SingleValueMapper<u32>;
 
-    #[storage_mapper("startTime")]
-    fn start_time(&self) -> SingleValueMapper<u64>;
-
-    #[storage_mapper("endTime")]
-    fn end_time(&self) -> SingleValueMapper<u64>;
-
     #[storage_mapper("mintedIndexes")]
     fn minted_indexes(&self) -> SetMapper<u32>;
+
+    #[storage_mapper("mintedIndexesByDrop")]
+    fn minted_indexes_by_drop(&self) -> SetMapper<u32>;
 
     #[storage_mapper("nextIndexToMint")]
     fn next_index_to_mint(&self) -> SingleValueMapper<u32>;
@@ -471,4 +510,7 @@ pub trait ElvenTools {
 
     #[storage_mapper("mintedPerAddress")]
     fn minted_per_address(&self, address: &ManagedAddress) -> SingleValueMapper<u32>;
+
+    #[storage_mapper("amountOfTokensPerDrop")]
+    fn amount_of_tokens_per_drop(&self) -> SingleValueMapper<u32>;
 }

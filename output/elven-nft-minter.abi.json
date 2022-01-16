@@ -36,14 +36,6 @@
                 "type": "u32"
             },
             {
-                "name": "start_timestamp",
-                "type": "u64"
-            },
-            {
-                "name": "end_timestamp",
-                "type": "u64"
-            },
-            {
                 "name": "royalties",
                 "type": "BigUint"
             },
@@ -104,7 +96,26 @@
             "outputs": []
         },
         {
-            "name": "resumeMinting",
+            "name": "startMinting",
+            "onlyOwner": true,
+            "mutability": "mutable",
+            "inputs": [],
+            "outputs": []
+        },
+        {
+            "name": "setDrop",
+            "onlyOwner": true,
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "amount_of_tokens_per_drop",
+                    "type": "u32"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "unsetDrop",
             "onlyOwner": true,
             "mutability": "mutable",
             "inputs": [],
@@ -155,7 +166,17 @@
             "outputs": []
         },
         {
-            "name": "tokensLeft",
+            "name": "dropTokensLeft",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "u32"
+                }
+            ]
+        },
+        {
+            "name": "totalTokensLeft",
             "mutability": "readonly",
             "inputs": [],
             "outputs": [

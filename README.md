@@ -26,8 +26,7 @@ TODO: next steps and description
 
 #### TODO:
 
-- remove start/stop config when deploying - instead use start endpoint (integrate with presales)
-- drops/presale 
+- remove start/stop config when deploying - instead use start endpoint (integrate with presales) - drops/presale 
 - shuffle mechanism (RandomnessSource - waits for new elrond-wasm-rs)
 - tests
 - data checks 
