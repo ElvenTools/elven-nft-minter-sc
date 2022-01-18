@@ -4,7 +4,7 @@
 
 ### Usage (devnet):
 
-**You can also use [elven-tools-cli](https://github.com/juliancwirko/elven-tools-cli) for that!**
+**You can also use [elven-tools-cli](https://github.com/juliancwirko/elven-tools-cli/tree/development) for that!**
 
 1. Clone the repo
 
