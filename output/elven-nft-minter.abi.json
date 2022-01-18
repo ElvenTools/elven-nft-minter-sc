@@ -122,6 +122,18 @@
             "outputs": []
         },
         {
+            "name": "setNewPrice",
+            "onlyOwner": true,
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "price",
+                    "type": "BigUint"
+                }
+            ],
+            "outputs": []
+        },
+        {
             "name": "giveaway",
             "onlyOwner": true,
             "mutability": "mutable",

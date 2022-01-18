@@ -21,6 +21,7 @@ elrond_wasm_node::wasm_endpoints! {
         provenanceHash
         setDrop
         setLocalRoles
+        setNewPrice
         shuffle
         startMinting
         totalTokensLeft

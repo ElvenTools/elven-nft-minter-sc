@@ -152,6 +152,15 @@ pub trait ElvenTools {
         Ok(())
     }
 
+    // The owner can change the price, for example, a new price for the next nft drop.
+    #[only_owner]
+    #[endpoint(setNewPrice)]
+    fn set_new_price(&self, price: BigUint) -> SCResult<()> {
+        self.selling_price().set(&price);
+
+        Ok(())
+    }
+
     // As an owner of the smart contract, you can send randomly minted NFTs to chosen addresses.
     #[only_owner]
     #[endpoint(giveaway)]

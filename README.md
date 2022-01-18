@@ -26,7 +26,7 @@ TODO: next steps and description
 
 #### TODO:
 
-- remove start/stop config when deploying - instead use start endpoint (integrate with presales) - drops/presale 
+- smart contract upgrade - test if there are needed changes in the init function
 - shuffle mechanism (RandomnessSource - waits for new elrond-wasm-rs)
 - tests
 - data checks 
