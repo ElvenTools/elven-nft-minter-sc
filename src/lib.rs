@@ -282,8 +282,8 @@ pub trait ElvenTools {
 
         let attributes_hash = self
             .crypto()
-            .sha256(&attributes.to_boxed_bytes().as_slice());
-        let hash_buffer = ManagedBuffer::from(attributes_hash.as_bytes());
+            .sha256(&attributes);
+        let hash_buffer = attributes_hash.as_managed_buffer();
 
         let uris = self.build_uris_vec();
 

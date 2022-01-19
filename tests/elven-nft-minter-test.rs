@@ -7,14 +7,11 @@ use elrond_wasm_debug::{
     DebugApi,
 };
 
-use std::time::{SystemTime, UNIX_EPOCH};
-
 const WASM_PATH: &'static str = "output/elven-nft-minter.wasm";
-const ONE_WEEK: u64 = 7 * 24 * 60 * 60; // 1 week in seconds
 
 struct ElvenNftMinterSetup<ElvenNftMinterObjBuilder>
 where
-    ElvenNftMinterObjBuilder: 'static + Copy + Fn(DebugApi) -> elven_nft_minter::ContractObj<DebugApi>,
+    ElvenNftMinterObjBuilder: 'static + Copy + Fn() -> elven_nft_minter::ContractObj<DebugApi>,
 {
     pub blockchain_wrapper: BlockchainStateWrapper,
     pub owner_address: Address,
@@ -26,7 +23,7 @@ fn setup_elven_nft_minter<ElvenNftMinterObjBuilder>(
 ) -> ElvenNftMinterSetup<ElvenNftMinterObjBuilder>
 where
     ElvenNftMinterObjBuilder:
-        'static + Copy + Fn(DebugApi) -> elven_nft_minter::ContractObj<DebugApi>,
+        'static + Copy + Fn() -> elven_nft_minter::ContractObj<DebugApi>,
 {
     let rust_zero = rust_biguint!(0u64);
     let mut blockchain_wrapper = BlockchainStateWrapper::new();

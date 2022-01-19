@@ -7,7 +7,6 @@
 elrond_wasm_node::wasm_endpoints! {
     elven_nft_minter
     (
-        init
         callBack
         claimScFunds
         dropTokensLeft
