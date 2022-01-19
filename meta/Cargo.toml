@@ -1,6 +1,6 @@
 [package]
 name = "elven-nft-minter-meta"
-version = "0.2.0"
+version = "1.0.0"
 authors = ["Julian Ćwirko <julian.cwirko@gmail.com>"]
 edition = "2018"
 publish = false

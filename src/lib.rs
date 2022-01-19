@@ -43,7 +43,7 @@ pub trait ElvenTools {
 
         self.image_base_cid().set(&image_base_cid);
         self.metadata_base_cid().set(&metadata_base_cid);
-        self.amount_of_tokens().set(&amount_of_tokens);
+        self.amount_of_tokens_total().set(&amount_of_tokens);
         self.tokens_limit_per_address()
             .set(&tokens_limit_per_address);
         self.provenance_hash()
@@ -59,10 +59,7 @@ pub trait ElvenTools {
         let paused = true;
         self.paused().set(&paused);
 
-        // TODO: enable when shuffle is ready - replace '1' with random index
-        // self.shuffle();
-
-        let first_index = 1;
+        let first_index = self.do_shuffle();
         self.next_index_to_mint().set(&first_index);
 
         Ok(())
@@ -79,6 +76,8 @@ pub trait ElvenTools {
         token_ticker: ManagedBuffer,
     ) -> SCResult<AsyncCall> {
         require!(self.nft_token_id().is_empty(), "Token already issued!");
+
+        self.nft_token_name().set(&token_name);
 
         Ok(self
             .send()
@@ -274,7 +273,7 @@ pub trait ElvenTools {
         let amount = &BigUint::from(NFT_AMOUNT);
 
         let token = self.nft_token_id().get();
-        let token_name = self.nft_token_name().get();
+        let token_name = self.build_token_name_buffer();
 
         let royalties = self.royalties().get();
 
@@ -282,8 +281,8 @@ pub trait ElvenTools {
 
         let attributes_hash = self
             .crypto()
-            .sha256(&attributes);
-        let hash_buffer = attributes_hash.as_managed_buffer();
+            .sha256_legacy(&attributes.to_boxed_bytes().as_slice());
+        let hash_buffer = ManagedBuffer::from(attributes_hash.as_bytes());
 
         let uris = self.build_uris_vec();
 
@@ -339,8 +338,7 @@ pub trait ElvenTools {
 
     #[endpoint(shuffle)]
     fn shuffle(&self) -> SCResult<()> {
-        // TODO: enable when RandomnessSource is available
-        // Set next item to mint by random from whole tokens amount left
+        self.do_shuffle();
 
         Ok(())
     }
@@ -362,16 +360,30 @@ pub trait ElvenTools {
         }
     }
 
+    fn do_shuffle(&self) -> u32 {
+        let total_tokens_left = self.total_tokens_left().ok().unwrap_or_default();
+
+        let mut rand_source = RandomnessSource::<Self::Api>::new();
+        let mut rand_token_index: u32 = rand_source.next_u32_in_range(1, total_tokens_left);
+
+        let minted_indexes_mapper = self.minted_indexes_total();
+
+        while minted_indexes_mapper.contains(&rand_token_index) {
+            rand_token_index = rand_source.next_u32_in_range(1, total_tokens_left)
+        }
+
+        rand_token_index
+    }
+
     fn handle_next_index_setup(&self) {
-        // TODO: randomize, remove used indexes from randomization - should be done in the shuffle function
         let minted_index = self.next_index_to_mint().get();
         let drop_amount = self.amount_of_tokens_per_drop().get();
-        self.minted_indexes().insert(minted_index);
+        self.minted_indexes_total().insert(minted_index);
         if (drop_amount > 0) {
             self.minted_indexes_by_drop().insert(minted_index);
         }
 
-        let next_index = minted_index + 1;
+        let next_index = self.do_shuffle();
         self.next_index_to_mint().set(&next_index);
     }
 
@@ -404,7 +416,7 @@ pub trait ElvenTools {
         uris
     }
 
-    // TODO: this can be probably optimized with attributes struct, had problems with decoding on the api side
+    // This can be probably optimized with attributes struct, had problems with decoding on the api side
     fn build_attributes_buffer(&self) -> ManagedBuffer {
         use alloc::string::ToString;
 
@@ -429,6 +441,22 @@ pub trait ElvenTools {
         attributes.append(&metadata_file_extension);
 
         attributes
+    }
+
+    fn build_token_name_buffer(&self) -> ManagedBuffer {
+        use alloc::string::ToString;
+
+        let mut full_token_name = ManagedBuffer::new();
+        let token_name_from_storage = self.nft_token_name().get();
+        let index_to_mint = self.next_index_to_mint().get();
+        let token_index = ManagedBuffer::new_from_bytes(index_to_mint.to_string().as_bytes());
+        let hash_sign = ManagedBuffer::new_from_bytes(" #".as_bytes());
+
+        full_token_name.append(&token_name_from_storage);
+        full_token_name.append(&hash_sign);
+        full_token_name.append(&token_index);
+
+        full_token_name
     }
 
     fn get_current_left_tokens_amount(&self) -> u32 {
@@ -459,8 +487,8 @@ pub trait ElvenTools {
 
     #[view(totalTokensLeft)]
     fn total_tokens_left(&self) -> SCResult<u32> {
-        let minted_tokens = self.minted_indexes().len();
-        let amount_of_tokens = self.amount_of_tokens().get();
+        let minted_tokens = self.minted_indexes_total().len();
+        let amount_of_tokens = self.amount_of_tokens_total().get();
         let left_tokens: u32 = amount_of_tokens - minted_tokens as u32;
 
         Ok(left_tokens)
@@ -491,11 +519,11 @@ pub trait ElvenTools {
     #[storage_mapper("file_extension")]
     fn file_extension(&self) -> SingleValueMapper<ManagedBuffer>;
 
-    #[storage_mapper("amountOfTokens")]
-    fn amount_of_tokens(&self) -> SingleValueMapper<u32>;
+    #[storage_mapper("amountOfTokensTotal")]
+    fn amount_of_tokens_total(&self) -> SingleValueMapper<u32>;
 
-    #[storage_mapper("mintedIndexes")]
-    fn minted_indexes(&self) -> SetMapper<u32>;
+    #[storage_mapper("mintedIndexesTotal")]
+    fn minted_indexes_total(&self) -> SetMapper<u32>;
 
     #[storage_mapper("mintedIndexesByDrop")]
     fn minted_indexes_by_drop(&self) -> SetMapper<u32>;
