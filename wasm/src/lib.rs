@@ -9,21 +9,21 @@ elrond_wasm_node::wasm_endpoints! {
     (
         callBack
         claimScFunds
-        dropTokensLeft
+        getDropTokensLeft
         getNftPrice
         getNftTokenId
         getNftTokenName
+        getProvenanceHash
+        getTotalTokensLeft
         giveaway
         issueToken
         mint
         pauseMinting
-        provenanceHash
         setDrop
         setLocalRoles
         setNewPrice
         shuffle
         startMinting
-        totalTokensLeft
         unsetDrop
     )
 }

@@ -178,7 +178,7 @@
             "outputs": []
         },
         {
-            "name": "dropTokensLeft",
+            "name": "getDropTokensLeft",
             "mutability": "readonly",
             "inputs": [],
             "outputs": [
@@ -188,7 +188,7 @@
             ]
         },
         {
-            "name": "totalTokensLeft",
+            "name": "getTotalTokensLeft",
             "mutability": "readonly",
             "inputs": [],
             "outputs": [
@@ -228,7 +228,7 @@
             ]
         },
         {
-            "name": "provenanceHash",
+            "name": "getProvenanceHash",
             "mutability": "readonly",
             "inputs": [],
             "outputs": [

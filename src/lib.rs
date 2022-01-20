@@ -476,7 +476,7 @@ pub trait ElvenTools {
         tokens_left
     }
 
-    #[view(dropTokensLeft)]
+    #[view(getDropTokensLeft)]
     fn drop_tokens_left(&self) -> SCResult<u32> {
         let minted_tokens = self.minted_indexes_by_drop().len();
         let amount_of_tokens = self.amount_of_tokens_per_drop().get();
@@ -485,7 +485,7 @@ pub trait ElvenTools {
         Ok(left_tokens)
     }
 
-    #[view(totalTokensLeft)]
+    #[view(getTotalTokensLeft)]
     fn total_tokens_left(&self) -> SCResult<u32> {
         let minted_tokens = self.minted_indexes_total().len();
         let amount_of_tokens = self.amount_of_tokens_total().get();
@@ -506,7 +506,7 @@ pub trait ElvenTools {
     #[storage_mapper("nftPrice")]
     fn selling_price(&self) -> SingleValueMapper<BigUint>;
 
-    #[view(provenanceHash)]
+    #[view(getProvenanceHash)]
     #[storage_mapper("provenanceHash")]
     fn provenance_hash(&self) -> SingleValueMapper<ManagedBuffer>;
 
