@@ -510,6 +510,14 @@ pub trait ElvenTools {
     #[storage_mapper("provenanceHash")]
     fn provenance_hash(&self) -> SingleValueMapper<ManagedBuffer>;
 
+    #[view(getTokensLimitPerAddress)]
+    #[storage_mapper("tokensLimitPerAddress")]
+    fn tokens_limit_per_address(&self) -> SingleValueMapper<u32>;
+
+    #[view(getTokensMintedPerAddress)]
+    #[storage_mapper("mintedPerAddress")]
+    fn minted_per_address(&self, address: &ManagedAddress) -> SingleValueMapper<u32>;
+
     #[storage_mapper("iamgeBaseCid")]
     fn image_base_cid(&self) -> SingleValueMapper<ManagedBuffer>;
 
@@ -539,12 +547,6 @@ pub trait ElvenTools {
 
     #[storage_mapper("tags")]
     fn tags(&self) -> SingleValueMapper<ManagedBuffer>;
-
-    #[storage_mapper("tokensLimitPerAddress")]
-    fn tokens_limit_per_address(&self) -> SingleValueMapper<u32>;
-
-    #[storage_mapper("mintedPerAddress")]
-    fn minted_per_address(&self, address: &ManagedAddress) -> SingleValueMapper<u32>;
 
     #[storage_mapper("amountOfTokensPerDrop")]
     fn amount_of_tokens_per_drop(&self) -> SingleValueMapper<u32>;

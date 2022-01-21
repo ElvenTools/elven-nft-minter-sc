@@ -14,6 +14,8 @@ elrond_wasm_node::wasm_endpoints! {
         getNftTokenId
         getNftTokenName
         getProvenanceHash
+        getTokensLimitPerAddress
+        getTokensMintedPerAddress
         getTotalTokensLeft
         giveaway
         issueToken

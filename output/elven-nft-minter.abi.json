@@ -236,6 +236,31 @@
                     "type": "bytes"
                 }
             ]
+        },
+        {
+            "name": "getTokensLimitPerAddress",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "u32"
+                }
+            ]
+        },
+        {
+            "name": "getTokensMintedPerAddress",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "address",
+                    "type": "Address"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "u32"
+                }
+            ]
         }
     ],
     "hasCallback": true,
