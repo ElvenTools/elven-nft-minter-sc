@@ -122,6 +122,29 @@
             "outputs": []
         },
         {
+            "name": "setPresale",
+            "onlyOwner": true,
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "amount_of_tokens_per_drop",
+                    "type": "u32"
+                },
+                {
+                    "name": "price_per_token",
+                    "type": "BigUint"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "unsetPresale",
+            "onlyOwner": true,
+            "mutability": "mutable",
+            "inputs": [],
+            "outputs": []
+        },
+        {
             "name": "setNewPrice",
             "onlyOwner": true,
             "mutability": "mutable",
@@ -129,6 +152,34 @@
                 {
                     "name": "price",
                     "type": "BigUint"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "changeBaseCids",
+            "onlyOwner": true,
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "image_base_cid",
+                    "type": "bytes"
+                },
+                {
+                    "name": "metadata_base_cid",
+                    "type": "bytes"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "setNewTokensLimitPerAddress",
+            "onlyOwner": true,
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "limit",
+                    "type": "u32"
                 }
             ],
             "outputs": []
@@ -147,13 +198,6 @@
                     "type": "u32"
                 }
             ],
-            "outputs": []
-        },
-        {
-            "name": "claimScFunds",
-            "onlyOwner": true,
-            "mutability": "mutable",
-            "inputs": [],
             "outputs": []
         },
         {
@@ -178,6 +222,33 @@
             "outputs": []
         },
         {
+            "name": "reservePresaleSlot",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "address",
+                    "type": "Address"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "presaleClaim",
+            "mutability": "mutable",
+            "inputs": [],
+            "outputs": []
+        },
+        {
+            "name": "getPresaleSlotsLeft",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "u32"
+                }
+            ]
+        },
+        {
             "name": "getDropTokensLeft",
             "mutability": "readonly",
             "inputs": [],
@@ -194,6 +265,21 @@
             "outputs": [
                 {
                     "type": "u32"
+                }
+            ]
+        },
+        {
+            "name": "checkPresaleEligibility",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "address",
+                    "type": "Address"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "bool"
                 }
             ]
         },
@@ -256,6 +342,26 @@
                     "type": "Address"
                 }
             ],
+            "outputs": [
+                {
+                    "type": "u32"
+                }
+            ]
+        },
+        {
+            "name": "getPresalePricePerToken",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "BigUint"
+                }
+            ]
+        },
+        {
+            "name": "getAmountOfTokensPerPresale",
+            "mutability": "readonly",
+            "inputs": [],
             "outputs": [
                 {
                     "type": "u32"
