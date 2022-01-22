@@ -157,13 +157,15 @@ pub trait ElvenTools {
     }
 
     // Presales are meant to be used to reserve tokens without minting them at the exact moment
-    // Useful for preparing the presale even without assets ready
+    // Useful for preparing the presale even without assets ready yet
+    // There is an option to set up a presale only for allowed addresses
     #[only_owner]
     #[endpoint(setPresale)]
     fn set_presale(
         &self,
         amount_of_tokens_per_drop: u32,
         price_per_token: BigUint,
+        allowlist_only: bool,
     ) -> SCResult<()> {
         let minted_tokens = self.minted_indexes_total().len();
         require!(
@@ -174,6 +176,36 @@ pub trait ElvenTools {
         self.amount_of_tokens_per_presale()
             .set(&amount_of_tokens_per_drop);
         self.presale_price_per_token().set(price_per_token);
+        if (allowlist_only) {
+            self.presale_allowlist_only().set(true);
+        } else {
+            self.presale_allowlist_only().set(false);
+        }
+
+        Ok(())
+    }
+
+    // TODO: not tested yet!
+    #[only_owner]
+    #[endpoint(addPresaleAllowlistAddresses)]
+    fn add_presale_allowlist_addresses(
+        &self,
+        addresses: ManagedVec<ManagedAddress>,
+    ) -> SCResult<()> {
+        require!(
+            !self.amount_of_tokens_per_presale().is_empty(),
+            "Presale is not active!"
+        );
+        require!(
+            self.presale_allowlist_only().get(),
+            "The presale is not set as for allowlist addresses only."
+        );
+
+        let mut eligible_addresses = self.presale_eligible_addresses();
+
+        for item in &addresses {
+          eligible_addresses.insert(item);
+        }
 
         Ok(())
     }
@@ -393,11 +425,16 @@ pub trait ElvenTools {
     // TODO: not tested yet!
     #[payable("EGLD")]
     #[endpoint(reservePresaleSlot)]
-    fn reserve_presale_slot(&self, #[payment_amount] payment_amount: BigUint,) -> SCResult<()> {
+    fn reserve_presale_slot(&self, #[payment_amount] payment_amount: BigUint) -> SCResult<()> {
         require!(
             !self.amount_of_tokens_per_presale().is_empty(),
             "Presale is not active!"
         );
+        require!(
+            !self.presale_allowlist_only().get(),
+            "You can't reserve the presale slot! The presale is for allowlist addresses only."
+        );
+
         let presale_price = self.presale_price_per_token().get();
         require!(payment_amount == presale_price, "Invalid amount as payment");
 
@@ -678,4 +715,7 @@ pub trait ElvenTools {
 
     #[storage_mapper("presaleEligibleAddresses")]
     fn presale_eligible_addresses(&self) -> SetMapper<ManagedAddress>;
+
+    #[storage_mapper("allowlistOnly")]
+    fn presale_allowlist_only(&self) -> SingleValueMapper<bool>;
 }

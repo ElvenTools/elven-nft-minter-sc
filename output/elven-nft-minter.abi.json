@@ -133,6 +133,22 @@
                 {
                     "name": "price_per_token",
                     "type": "BigUint"
+                },
+                {
+                    "name": "allowlist_only",
+                    "type": "bool"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "addPresaleAllowlistAddresses",
+            "onlyOwner": true,
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "addresses",
+                    "type": "List<Address>"
                 }
             ],
             "outputs": []

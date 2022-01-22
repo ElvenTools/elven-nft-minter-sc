@@ -13,6 +13,7 @@ TODO: detailed documentation!
 - [julian.io](https://www.julian.io/)
 
 #### TODO:
+- option to add allowlist of addresses for the presale
 - readme + docs
 - tests
 - additional nft roles management (optional with default set) (???)

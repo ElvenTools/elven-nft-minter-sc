@@ -8,6 +8,7 @@ elrond_wasm_node::wasm_endpoints! {
     elven_nft_minter
     (
         callBack
+        addPresaleAllowlistAddresses
         changeBaseCids
         checkPresaleEligibility
         getAmountOfTokensPerPresale
