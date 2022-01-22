@@ -390,14 +390,20 @@ pub trait ElvenTools {
         Ok(())
     }
 
+    // TODO: not tested yet!
+    #[payable("EGLD")]
     #[endpoint(reservePresaleSlot)]
-    fn reserve_presale_slot(&self, address: ManagedAddress) -> SCResult<()> {
+    fn reserve_presale_slot(&self, #[payment_amount] payment_amount: BigUint,) -> SCResult<()> {
         require!(
             !self.amount_of_tokens_per_presale().is_empty(),
             "Presale is not active!"
         );
+        let presale_price = self.presale_price_per_token().get();
+        require!(payment_amount == presale_price, "Invalid amount as payment");
 
-        self.presale_eligible_addresses().insert(address);
+        let caller = self.blockchain().get_caller();
+
+        self.presale_eligible_addresses().insert(caller);
 
         Ok(())
     }

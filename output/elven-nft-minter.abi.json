@@ -224,12 +224,10 @@
         {
             "name": "reservePresaleSlot",
             "mutability": "mutable",
-            "inputs": [
-                {
-                    "name": "address",
-                    "type": "Address"
-                }
+            "payableInTokens": [
+                "EGLD"
             ],
+            "inputs": [],
             "outputs": []
         },
         {
