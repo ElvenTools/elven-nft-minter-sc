@@ -122,45 +122,6 @@
             "outputs": []
         },
         {
-            "name": "setPresale",
-            "onlyOwner": true,
-            "mutability": "mutable",
-            "inputs": [
-                {
-                    "name": "amount_of_tokens_per_drop",
-                    "type": "u32"
-                },
-                {
-                    "name": "price_per_token",
-                    "type": "BigUint"
-                },
-                {
-                    "name": "allowlist_only",
-                    "type": "bool"
-                }
-            ],
-            "outputs": []
-        },
-        {
-            "name": "addPresaleAllowlistAddresses",
-            "onlyOwner": true,
-            "mutability": "mutable",
-            "inputs": [
-                {
-                    "name": "addresses",
-                    "type": "List<Address>"
-                }
-            ],
-            "outputs": []
-        },
-        {
-            "name": "unsetPresale",
-            "onlyOwner": true,
-            "mutability": "mutable",
-            "inputs": [],
-            "outputs": []
-        },
-        {
             "name": "setNewPrice",
             "onlyOwner": true,
             "mutability": "mutable",
@@ -238,31 +199,6 @@
             "outputs": []
         },
         {
-            "name": "reservePresaleSlot",
-            "mutability": "mutable",
-            "payableInTokens": [
-                "EGLD"
-            ],
-            "inputs": [],
-            "outputs": []
-        },
-        {
-            "name": "presaleClaim",
-            "mutability": "mutable",
-            "inputs": [],
-            "outputs": []
-        },
-        {
-            "name": "getPresaleSlotsLeft",
-            "mutability": "readonly",
-            "inputs": [],
-            "outputs": [
-                {
-                    "type": "u32"
-                }
-            ]
-        },
-        {
             "name": "getDropTokensLeft",
             "mutability": "readonly",
             "inputs": [],
@@ -279,21 +215,6 @@
             "outputs": [
                 {
                     "type": "u32"
-                }
-            ]
-        },
-        {
-            "name": "checkPresaleEligibility",
-            "mutability": "readonly",
-            "inputs": [
-                {
-                    "name": "address",
-                    "type": "Address"
-                }
-            ],
-            "outputs": [
-                {
-                    "type": "bool"
                 }
             ]
         },
@@ -356,26 +277,6 @@
                     "type": "Address"
                 }
             ],
-            "outputs": [
-                {
-                    "type": "u32"
-                }
-            ]
-        },
-        {
-            "name": "getPresalePricePerToken",
-            "mutability": "readonly",
-            "inputs": [],
-            "outputs": [
-                {
-                    "type": "BigUint"
-                }
-            ]
-        },
-        {
-            "name": "getAmountOfTokensPerPresale",
-            "mutability": "readonly",
-            "inputs": [],
             "outputs": [
                 {
                     "type": "u32"

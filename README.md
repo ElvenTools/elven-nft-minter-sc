@@ -13,7 +13,6 @@ TODO: detailed documentation!
 - [julian.io](https://www.julian.io/)
 
 #### TODO:
-- option to add allowlist of addresses for the presale
 - readme + docs
 - tests
 - additional nft roles management (optional with default set) (???)
@@ -21,4 +20,5 @@ TODO: detailed documentation!
 - manual testing (help needed)
 
 #### TODO (for later)
+- bid, clear, mint for eligible
 - rethink usage of ESDTRoleNFTUpdateAttributes and ESDTRoleNFTAddURI

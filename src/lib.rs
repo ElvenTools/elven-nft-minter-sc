@@ -127,16 +127,11 @@ pub trait ElvenTools {
     #[only_owner]
     #[endpoint(startMinting)]
     fn start_minting(&self) -> SCResult<()> {
-        require!(
-            self.amount_of_tokens_per_presale().is_empty(),
-            "Presale is active! You can't start standard minting. Finish the presale first."
-        );
         self.paused().clear();
 
         Ok(())
     }
 
-    // Drops are meant to be used in a regular public sale, but in waves with different prices, etc.
     #[only_owner]
     #[endpoint(setDrop)]
     fn set_drop(&self, amount_of_tokens_per_drop: u32) -> SCResult<()> {
@@ -152,68 +147,6 @@ pub trait ElvenTools {
     fn unset_drop(&self) -> SCResult<()> {
         self.amount_of_tokens_per_drop().clear();
         self.minted_indexes_by_drop().clear();
-
-        Ok(())
-    }
-
-    // Presales are meant to be used to reserve tokens without minting them at the exact moment
-    // Useful for preparing the presale even without assets ready yet
-    // There is an option to set up a presale only for allowed addresses
-    #[only_owner]
-    #[endpoint(setPresale)]
-    fn set_presale(
-        &self,
-        amount_of_tokens_per_drop: u32,
-        price_per_token: BigUint,
-        allowlist_only: bool,
-    ) -> SCResult<()> {
-        let minted_tokens = self.minted_indexes_total().len();
-        require!(
-            minted_tokens == 0,
-            "You can't set up the presale. There are some tokens minted already!"
-        );
-
-        self.amount_of_tokens_per_presale()
-            .set(&amount_of_tokens_per_drop);
-        self.presale_price_per_token().set(price_per_token);
-        if (allowlist_only) {
-            self.presale_allowlist_only().set(true);
-        } else {
-            self.presale_allowlist_only().set(false);
-        }
-
-        Ok(())
-    }
-
-    // TODO: not tested yet!
-    #[only_owner]
-    #[endpoint(addPresaleAllowlistAddresses)]
-    fn add_presale_allowlist_addresses(
-        &self,
-        addresses: ManagedVec<ManagedAddress>,
-    ) -> SCResult<()> {
-        require!(
-            !self.amount_of_tokens_per_presale().is_empty(),
-            "Presale is not active!"
-        );
-        require!(
-            self.presale_allowlist_only().get(),
-            "The presale is not set as for allowlist addresses only."
-        );
-
-        let mut eligible_addresses = self.presale_eligible_addresses();
-
-        for item in &addresses {
-          eligible_addresses.insert(item);
-        }
-
-        Ok(())
-    }
-
-    #[only_owner]
-    #[endpoint(unsetPresale)]
-    fn unset_presale(&self) -> SCResult<()> {
-        self.amount_of_tokens_per_presale().clear();
 
         Ok(())
     }
@@ -343,7 +276,7 @@ pub trait ElvenTools {
         Ok(())
     }
 
-    // Private single token mint function. It is also used for the giveaway and presale.
+    // Private single token mint function. It is also used for the giveaway.
     fn mint_single_nft(
         &self,
         payment_amount: BigUint,
@@ -418,64 +351,6 @@ pub trait ElvenTools {
     #[endpoint(shuffle)]
     fn shuffle(&self) -> SCResult<()> {
         self.do_shuffle();
-
-        Ok(())
-    }
-
-    // TODO: not tested yet!
-    #[payable("EGLD")]
-    #[endpoint(reservePresaleSlot)]
-    fn reserve_presale_slot(&self, #[payment_amount] payment_amount: BigUint) -> SCResult<()> {
-        require!(
-            !self.amount_of_tokens_per_presale().is_empty(),
-            "Presale is not active!"
-        );
-        require!(
-            !self.presale_allowlist_only().get(),
-            "You can't reserve the presale slot! The presale is for allowlist addresses only."
-        );
-
-        let presale_price = self.presale_price_per_token().get();
-        require!(payment_amount == presale_price, "Invalid amount as payment");
-
-        let caller = self.blockchain().get_caller();
-
-        self.presale_eligible_addresses().insert(caller);
-
-        Ok(())
-    }
-
-    #[endpoint(presaleClaim)]
-    fn presale_claim(&self) -> SCResult<()> {
-        let token = self.nft_token_id().get();
-        let roles = self.blockchain().get_esdt_local_roles(&token);
-        require!(
-            !self.nft_token_id().is_empty(),
-            "Collection token not issued!"
-        );
-        require!(
-            roles.has_role(&EsdtLocalRole::NftCreate),
-            "NFTCreate role not set!"
-        );
-        require!(
-            self.amount_of_tokens_per_presale().is_empty(),
-            "You can't claim yet!"
-        );
-
-        let caller = self.blockchain().get_caller();
-        let owner = self.blockchain().get_owner_address();
-        let presale_price = self.presale_price_per_token().get();
-        let tokens_left = self.total_tokens_left().unwrap();
-
-        if (tokens_left > 0) {
-            self.mint_single_nft(BigUint::zero(), OptionalArg::Some(caller.clone()))
-                .unwrap();
-            self.send().direct_egld(&owner, &presale_price, &[]);
-        } else {
-            self.send().direct_egld(&caller, &presale_price, &[]);
-        }
-
-        self.presale_eligible_addresses().remove(&caller);
 
         Ok(())
     }
@@ -613,16 +488,6 @@ pub trait ElvenTools {
         tokens_left
     }
 
-    // For now 1 token per 1 address is possible for the presale
-    #[view(getPresaleSlotsLeft)]
-    fn presale_tokens_left(&self) -> SCResult<u32> {
-        let minted_tokens = self.presale_eligible_addresses().len();
-        let amount_of_tokens = self.amount_of_tokens_per_presale().get();
-        let left_slots: u32 = amount_of_tokens - minted_tokens as u32;
-
-        Ok(left_slots)
-    }
-
     #[view(getDropTokensLeft)]
     fn drop_tokens_left(&self) -> SCResult<u32> {
         let minted_tokens = self.minted_indexes_by_drop().len();
@@ -639,13 +504,6 @@ pub trait ElvenTools {
         let left_tokens: u32 = amount_of_tokens - minted_tokens as u32;
 
         Ok(left_tokens)
-    }
-
-    #[view(checkPresaleEligibility)]
-    fn check_presale_eligibility(&self, address: ManagedAddress) -> SCResult<bool> {
-        let eligible = self.presale_eligible_addresses().contains(&address);
-
-        Ok(eligible)
     }
 
     #[view(getNftTokenId)]
@@ -671,14 +529,6 @@ pub trait ElvenTools {
     #[view(getTokensMintedPerAddress)]
     #[storage_mapper("mintedPerAddress")]
     fn minted_per_address(&self, address: &ManagedAddress) -> SingleValueMapper<u32>;
-
-    #[view(getPresalePricePerToken)]
-    #[storage_mapper("presalePricePerToken")]
-    fn presale_price_per_token(&self) -> SingleValueMapper<BigUint>;
-
-    #[view(getAmountOfTokensPerPresale)]
-    #[storage_mapper("amountOfTokensPerPresale")]
-    fn amount_of_tokens_per_presale(&self) -> SingleValueMapper<u32>;
 
     #[storage_mapper("iamgeBaseCid")]
     fn image_base_cid(&self) -> SingleValueMapper<ManagedBuffer>;
@@ -712,10 +562,4 @@ pub trait ElvenTools {
 
     #[storage_mapper("amountOfTokensPerDrop")]
     fn amount_of_tokens_per_drop(&self) -> SingleValueMapper<u32>;
-
-    #[storage_mapper("presaleEligibleAddresses")]
-    fn presale_eligible_addresses(&self) -> SetMapper<ManagedAddress>;
-
-    #[storage_mapper("allowlistOnly")]
-    fn presale_allowlist_only(&self) -> SingleValueMapper<bool>;
 }

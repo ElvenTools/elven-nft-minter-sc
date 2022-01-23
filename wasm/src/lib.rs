@@ -8,16 +8,11 @@ elrond_wasm_node::wasm_endpoints! {
     elven_nft_minter
     (
         callBack
-        addPresaleAllowlistAddresses
         changeBaseCids
-        checkPresaleEligibility
-        getAmountOfTokensPerPresale
         getDropTokensLeft
         getNftPrice
         getNftTokenId
         getNftTokenName
-        getPresalePricePerToken
-        getPresaleSlotsLeft
         getProvenanceHash
         getTokensLimitPerAddress
         getTokensMintedPerAddress
@@ -26,16 +21,12 @@ elrond_wasm_node::wasm_endpoints! {
         issueToken
         mint
         pauseMinting
-        presaleClaim
-        reservePresaleSlot
         setDrop
         setLocalRoles
         setNewPrice
         setNewTokensLimitPerAddress
-        setPresale
         shuffle
         startMinting
         unsetDrop
-        unsetPresale
     )
 }
