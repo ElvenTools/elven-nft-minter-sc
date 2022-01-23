@@ -19,6 +19,7 @@ TODO: detailed documentation!
 - perf rewrites (help needed)
 - manual testing (help needed)
 
-#### TODO (for later)
-- bid, clear, mint for eligible
-- rethink usage of ESDTRoleNFTUpdateAttributes and ESDTRoleNFTAddURI
+#### TODO v2
+- bid, clear, mint for only eligible
+- possibility to split into drops, presale (with allowlist option)
+- rethink usage of ESDTRoleNFTUpdateAttributes and ESDTRoleNFTAddURI (???)
