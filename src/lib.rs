@@ -24,9 +24,7 @@ pub trait ElvenTools {
         image_base_cid: ManagedBuffer,
         metadata_base_cid: ManagedBuffer,
         amount_of_tokens: u32,
-        tokens_limit_per_address: u32,
         royalties: BigUint,
-        selling_price: BigUint,
         #[var_args] file_extension: OptionalArg<ManagedBuffer>,
         #[var_args] tags: OptionalArg<ManagedBuffer>,
         #[var_args] provenance_hash: OptionalArg<ManagedBuffer>,
@@ -36,20 +34,13 @@ pub trait ElvenTools {
             amount_of_tokens >= 1,
             "Amount of tokens to mint should be at least 1!"
         );
-        require!(
-            tokens_limit_per_address >= 1,
-            "Tokens limit per address should be at least 1!"
-        );
 
         self.image_base_cid().set(&image_base_cid);
         self.metadata_base_cid().set(&metadata_base_cid);
         self.amount_of_tokens_total().set(&amount_of_tokens);
-        self.tokens_limit_per_address()
-            .set(&tokens_limit_per_address);
         self.provenance_hash()
             .set(&provenance_hash.into_option().unwrap_or_default());
         self.royalties().set(&royalties);
-        self.selling_price().set(&selling_price);
         self.tags().set(&tags.into_option().unwrap_or_default());
         self.file_extension().set(
             &file_extension
@@ -57,7 +48,7 @@ pub trait ElvenTools {
                 .unwrap_or_else(|| ManagedBuffer::new_from_bytes(DEFAULT_IMG_FILE_EXTENSION)),
         );
         let paused = true;
-        self.paused().set(&paused);
+        self.bidding_paused().set(&paused);
 
         let first_index = self.do_shuffle();
         self.next_index_to_mint().set(&first_index);
@@ -117,45 +108,36 @@ pub trait ElvenTools {
 
     #[only_owner]
     #[endpoint(pauseMinting)]
-    fn pause_minting(&self) -> SCResult<()> {
+    fn pause_bidding(&self) -> SCResult<()> {
         let paused = true;
-        self.paused().set(&paused);
+        self.bidding_paused().set(&paused);
 
         Ok(())
     }
 
     #[only_owner]
     #[endpoint(startMinting)]
-    fn start_minting(&self) -> SCResult<()> {
-        self.paused().clear();
+    fn start_bidding(&self) -> SCResult<()> {
+        let paused = false;
+        self.bidding_paused().set(&paused);
 
         Ok(())
     }
 
     #[only_owner]
     #[endpoint(setDrop)]
-    fn set_drop(&self, amount_of_tokens_per_drop: u32) -> SCResult<()> {
-        self.minted_indexes_by_drop().clear();
-        self.amount_of_tokens_per_drop()
+    fn set_drop(
+        &self,
+        amount_of_tokens_per_drop: u32,
+        price_per_single_token: BigUint,
+    ) -> SCResult<()> {
+        let current_drop_id = self.current_drop_id().get();
+        let next_drop_id = current_drop_id + 1;
+        self.amount_of_tokens_per_drop(next_drop_id)
             .set(&amount_of_tokens_per_drop);
-
-        Ok(())
-    }
-
-    #[only_owner]
-    #[endpoint(unsetDrop)]
-    fn unset_drop(&self) -> SCResult<()> {
-        self.amount_of_tokens_per_drop().clear();
-        self.minted_indexes_by_drop().clear();
-
-        Ok(())
-    }
-
-    // The owner can change the price, for example, a new price for the next nft drop.
-    #[only_owner]
-    #[endpoint(setNewPrice)]
-    fn set_new_price(&self, price: BigUint) -> SCResult<()> {
-        self.selling_price().set(&price);
+        self.current_drop_id().set(next_drop_id);
+        self.token_price_per_drop(next_drop_id)
+            .set(price_per_single_token);
 
         Ok(())
     }
@@ -177,13 +159,6 @@ pub trait ElvenTools {
         self.image_base_cid().set(&image_base_cid);
         self.metadata_base_cid().set(&metadata_base_cid);
 
-        Ok(())
-    }
-
-    #[only_owner]
-    #[endpoint(setNewTokensLimitPerAddress)]
-    fn set_new_tokens_limit_per_address(&self, limit: u32) -> SCResult<()> {
-        self.tokens_limit_per_address().set(limit);
         Ok(())
     }
 
@@ -214,67 +189,176 @@ pub trait ElvenTools {
         Ok(())
     }
 
-    // Main mint function - takes the payment sum for all tokens to mint.
-    #[payable("EGLD")]
-    #[endpoint(mint)]
-    fn mint(
-        &self,
-        #[payment_amount] payment_amount: BigUint,
-        #[var_args] token_amount: OptionalArg<u32>,
-    ) -> SCResult<()> {
+    // The clearing endpoint will randomly reveal addresses eligible for minting
+    #[only_owner]
+    #[endpoint(clearing)]
+    fn clearing(&self) -> SCResult<()> {
+        let current_drop_id = self.current_drop_id().get();
+        let bidders = self.bidders_for_drop(current_drop_id);
+        let bidding_paused = self.bidding_paused().get();
         require!(
-            self.paused().is_empty(),
-            "The minting is paused or haven't started yet!"
+            bidding_paused,
+            "The bidding is still in progress. Pause it first!"
         );
-        require!(!self.nft_token_id().is_empty(), "Token not issued!");
-
-        let token = self.nft_token_id().get();
-
-        let roles = self.blockchain().get_esdt_local_roles(&token);
-
         require!(
-            roles.has_role(&EsdtLocalRole::NftCreate),
-            "ESDTNFTCreate role not set!"
+            current_drop_id > 0 && self.bidding_paused().get(),
+            "There were no drops for bidding initialized!"
         );
 
-        let mut tokens = token_amount.into_option().unwrap_or_default();
+        let bidders_amount = bidders.len();
 
-        require!(
-            self.get_current_left_tokens_amount() >= tokens,
-            "All tokens have been minted already (totally or per drop)!"
-        );
+        require!(bidders_amount > 0, "There are no bidders for this drop!");
 
-        let caller = self.blockchain().get_caller();
+        let amount_of_tokens = self.amount_of_tokens_per_drop(current_drop_id).get();
 
-        let minted_per_address = self.minted_per_address(&caller).get();
-        let tokens_limit_per_address = self.tokens_limit_per_address().get();
+        let mut bidders_vec = Vec::new();
+        let mut eligible_vec = Vec::new();
 
-        let tokens_left_to_mint = tokens_limit_per_address - minted_per_address;
-
-        if (tokens < 1) {
-            tokens = 1
+        for i in bidders.iter() {
+          bidders_vec.push(i);
         }
 
-        require!(
-            tokens_left_to_mint >= tokens,
-            "You can't mint such an amount of tokens. Check the limits by one address!"
-        );
+        let max_tokens;
 
-        let single_payment_amount = payment_amount / tokens;
+        if (amount_of_tokens <= bidders_amount as u32) {
+          max_tokens = amount_of_tokens;
+        } else {
+          max_tokens = bidders_amount as u32;
+        }
 
-        let price_tag = self.selling_price().get();
-        require!(
-            single_payment_amount == price_tag,
-            "Invalid amount as payment"
-        );
+        let mut rand_source = RandomnessSource::<Self::Api>::new();
+        for _ in 0..max_tokens {
+            let mut rand_token_index = rand_source.next_usize_in_range(1, bidders_amount);
+            let addr = bidders_vec.get(rand_token_index).unwrap();
+            while eligible_vec.contains(addr) {
+                rand_token_index = rand_source.next_usize_in_range(1, bidders_amount)
+            }
+            let address = bidders_vec.get(rand_token_index).unwrap();
+            eligible_vec.push(address.clone());
+        }
 
-        for _ in 0..tokens {
-            self.mint_single_nft(single_payment_amount.clone(), OptionalArg::None)
-                .unwrap();
+        for i in eligible_vec {
+          self.eligible_for_drop(current_drop_id).insert(i);
         }
 
         Ok(())
     }
+
+    // This is for every bidder who don't want to participate anymore.
+    // It is for particular drop. It is also for safety when the owner will not close the bidding.
+    #[endpoint(withdraw_bid)]
+    fn withdraw_bid(&self, drop_id: u32) -> SCResult<()> {
+        require!(drop_id > 0, "There was no such drop!");
+        let caller = self.blockchain().get_caller();
+
+        let mut bidders = self.bidders_for_drop(drop_id);
+
+        require!(
+            bidders.contains(&caller),
+            "There is no such address in the bidders list!"
+        );
+
+        let price = self.token_price_per_drop(drop_id).get();
+
+        bidders.remove(&caller);
+
+        self.send().direct_egld(&caller, &price, &[]);
+
+        Ok(())
+    }
+
+    // Bidding is delegating the price of a single token to be able to take part in a lottery which will reveal eligible addresses for claiming tokens
+    #[payable("EGLD")]
+    #[endpoint(bid)]
+    fn bid(&self, #[payment_amount] payment_amount: BigUint) -> SCResult<()> {
+        let current_drop_id = self.current_drop_id().get();
+        require!(
+            current_drop_id > 0 && !self.bidding_paused().get(),
+            "Bidding is not started yet!"
+        );
+
+        let price_per_token_per_drop = self.token_price_per_drop(current_drop_id).get();
+        require!(
+            payment_amount == price_per_token_per_drop,
+            "The bidding price is not correct!"
+        );
+
+        let caller = self.blockchain().get_caller();
+
+        let mut bidders_mapper = self.bidders_for_drop(current_drop_id);
+
+        require!(
+            !bidders_mapper.contains(&caller),
+            "This address is already on the bidders list!"
+        );
+
+        bidders_mapper.insert(caller);
+
+        Ok(())
+    }
+
+    // TODO: rewrite into claim, get payment from sc from previous bidding
+    // only bidder can use it -> gets nft or egld depending on clearing process
+    // #[payable("EGLD")]
+    // #[endpoint(mint)]
+    // fn mint(
+    //     &self,
+    //     #[payment_amount] payment_amount: BigUint,
+    //     #[var_args] token_amount: OptionalArg<u32>,
+    // ) -> SCResult<()> {
+    //     require!(
+    //         self.paused().is_empty(),
+    //         "The minting is paused or haven't started yet!"
+    //     );
+    //     require!(!self.nft_token_id().is_empty(), "Token not issued!");
+
+    //     let token = self.nft_token_id().get();
+
+    //     let roles = self.blockchain().get_esdt_local_roles(&token);
+
+    //     require!(
+    //         roles.has_role(&EsdtLocalRole::NftCreate),
+    //         "ESDTNFTCreate role not set!"
+    //     );
+
+    //     let mut tokens = token_amount.into_option().unwrap_or_default();
+
+    //     require!(
+    //         self.get_current_left_tokens_amount() >= tokens,
+    //         "All tokens have been minted already (totally or per drop)!"
+    //     );
+
+    //     let caller = self.blockchain().get_caller();
+
+    //     let minted_per_address = self.minted_per_address(&caller).get();
+    //     let tokens_limit_per_address = self.tokens_limit_per_address().get();
+
+    //     let tokens_left_to_mint = tokens_limit_per_address - minted_per_address;
+
+    //     if (tokens < 1) {
+    //         tokens = 1
+    //     }
+
+    //     require!(
+    //         tokens_left_to_mint >= tokens,
+    //         "You can't mint such an amount of tokens. Check the limits by one address!"
+    //     );
+
+    //     let single_payment_amount = payment_amount / tokens;
+
+    //     let price_tag = self.selling_price().get();
+    //     require!(
+    //         single_payment_amount == price_tag,
+    //         "Invalid amount as payment"
+    //     );
+
+    //     for _ in 0..tokens {
+    //         self.mint_single_nft(single_payment_amount.clone(), OptionalArg::None)
+    //             .unwrap();
+    //     }
+
+    //     Ok(())
+    // }
 
     // Private single token mint function. It is also used for the giveaway.
     fn mint_single_nft(
@@ -334,7 +418,9 @@ pub trait ElvenTools {
             &[],
         );
 
-        self.minted_per_address(&caller).update(|sum| *sum += 1);
+        let current_drop_id = self.current_drop_id().get();
+        self.minted_per_address_per_drop(&caller, current_drop_id)
+            .update(|sum| *sum += 1);
 
         if (payment_amount > 0) {
             let payment_nonce: u64 = 0;
@@ -389,10 +475,12 @@ pub trait ElvenTools {
 
     fn handle_next_index_setup(&self) {
         let minted_index = self.next_index_to_mint().get();
-        let drop_amount = self.amount_of_tokens_per_drop().get();
+        let current_drop_id = self.current_drop_id().get();
+        let drop_amount = self.amount_of_tokens_per_drop(current_drop_id).get();
         self.minted_indexes_total().insert(minted_index);
         if (drop_amount > 0) {
-            self.minted_indexes_by_drop().insert(minted_index);
+            self.minted_indexes_by_drop(current_drop_id)
+                .insert(minted_index);
         }
 
         let next_index = self.do_shuffle();
@@ -472,26 +560,40 @@ pub trait ElvenTools {
     }
 
     fn get_current_left_tokens_amount(&self) -> u32 {
-        let drop_amount = self.amount_of_tokens_per_drop().get();
+        let current_drop_id = self.current_drop_id().get();
+        let drop_amount = self.amount_of_tokens_per_drop(current_drop_id).get();
         let tokens_left;
         let paused = true;
         if (drop_amount > 0) {
-            tokens_left = self.drop_tokens_left().ok().unwrap_or_default();
+            tokens_left = self
+                .drop_tokens_left(current_drop_id)
+                .ok()
+                .unwrap_or_default();
         } else {
             tokens_left = self.total_tokens_left().ok().unwrap_or_default();
         }
 
         if (tokens_left <= 0) {
-            self.paused().set(&paused);
+            self.bidding_paused().set(&paused);
         }
 
         tokens_left
     }
 
+    #[view(checkEligibility)]
+    fn check_eligibility(&self, drop_id: u32) -> SCResult<bool> {
+        require!(drop_id > 0, "There was no such drop!");
+        let caller = self.blockchain().get_caller();
+
+        let eligible = self.eligible_for_drop(drop_id).contains(&caller);
+
+        Ok(eligible)
+    }
+
     #[view(getDropTokensLeft)]
-    fn drop_tokens_left(&self) -> SCResult<u32> {
-        let minted_tokens = self.minted_indexes_by_drop().len();
-        let amount_of_tokens = self.amount_of_tokens_per_drop().get();
+    fn drop_tokens_left(&self, drop_id: u32) -> SCResult<u32> {
+        let minted_tokens = self.minted_indexes_by_drop(drop_id).len();
+        let amount_of_tokens = self.amount_of_tokens_per_drop(drop_id).get();
         let left_tokens: u32 = amount_of_tokens - minted_tokens as u32;
 
         Ok(left_tokens)
@@ -514,21 +616,17 @@ pub trait ElvenTools {
     #[storage_mapper("nftTokenName")]
     fn nft_token_name(&self) -> SingleValueMapper<ManagedBuffer>;
 
-    #[view(getNftPrice)]
-    #[storage_mapper("nftPrice")]
-    fn selling_price(&self) -> SingleValueMapper<BigUint>;
-
     #[view(getProvenanceHash)]
     #[storage_mapper("provenanceHash")]
     fn provenance_hash(&self) -> SingleValueMapper<ManagedBuffer>;
 
-    #[view(getTokensLimitPerAddress)]
-    #[storage_mapper("tokensLimitPerAddress")]
-    fn tokens_limit_per_address(&self) -> SingleValueMapper<u32>;
-
-    #[view(getTokensMintedPerAddress)]
-    #[storage_mapper("mintedPerAddress")]
-    fn minted_per_address(&self, address: &ManagedAddress) -> SingleValueMapper<u32>;
+    #[view(getTokensMintedPerAddressPerDrop)]
+    #[storage_mapper("mintedPerAddressPerDrop")]
+    fn minted_per_address_per_drop(
+        &self,
+        address: &ManagedAddress,
+        drop_id: u32,
+    ) -> SingleValueMapper<u32>;
 
     #[storage_mapper("iamgeBaseCid")]
     fn image_base_cid(&self) -> SingleValueMapper<ManagedBuffer>;
@@ -545,8 +643,11 @@ pub trait ElvenTools {
     #[storage_mapper("mintedIndexesTotal")]
     fn minted_indexes_total(&self) -> SetMapper<u32>;
 
+    #[storage_mapper("currentDropIndex")]
+    fn current_drop_id(&self) -> SingleValueMapper<u32>;
+
     #[storage_mapper("mintedIndexesByDrop")]
-    fn minted_indexes_by_drop(&self) -> SetMapper<u32>;
+    fn minted_indexes_by_drop(&self, drop_id: u32) -> SetMapper<u32>;
 
     #[storage_mapper("nextIndexToMint")]
     fn next_index_to_mint(&self) -> SingleValueMapper<u32>;
@@ -554,12 +655,21 @@ pub trait ElvenTools {
     #[storage_mapper("royalties")]
     fn royalties(&self) -> SingleValueMapper<BigUint>;
 
-    #[storage_mapper("paused")]
-    fn paused(&self) -> SingleValueMapper<bool>;
+    #[storage_mapper("bidding_paused")]
+    fn bidding_paused(&self) -> SingleValueMapper<bool>;
 
     #[storage_mapper("tags")]
     fn tags(&self) -> SingleValueMapper<ManagedBuffer>;
 
     #[storage_mapper("amountOfTokensPerDrop")]
-    fn amount_of_tokens_per_drop(&self) -> SingleValueMapper<u32>;
+    fn amount_of_tokens_per_drop(&self, drop_id: u32) -> SingleValueMapper<u32>;
+
+    #[storage_mapper("biddingPricePerDrop")]
+    fn token_price_per_drop(&self, drop_id: u32) -> SingleValueMapper<BigUint>;
+
+    #[storage_mapper("biddersForDrop")]
+    fn bidders_for_drop(&self, drop_id: u32) -> SetMapper<ManagedAddress>;
+
+    #[storage_mapper("eligibleForDrop")]
+    fn eligible_for_drop(&self, drop_id: u32) -> SetMapper<ManagedAddress>;
 }

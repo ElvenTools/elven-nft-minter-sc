@@ -40,9 +40,7 @@ where
         let image_base_cid = ManagedBuffer::<DebugApi>::from(b"imageIpfsCID");
         let metadata_base_cid = ManagedBuffer::<DebugApi>::from(b"metadataIpfsCID");
         let number_of_tokens: u32 = 10000;
-        let tokens_limit_per_address: u32 = 3;
         let royalties = BigUint::from(1000 as u32);
-        let selling_price = BigUint::from(1000000000000000000 as u64);
 
         let tags = OptionalArg::Some(ManagedBuffer::<DebugApi>::from(b"tags:tag1,tag2"));
         let provenance_hash = OptionalArg::Some(ManagedBuffer::<DebugApi>::from(b"provenanceHash"));
@@ -51,9 +49,7 @@ where
           image_base_cid,
           metadata_base_cid,
           number_of_tokens,
-          tokens_limit_per_address,
           royalties,
-          selling_price,
           file_extension,
           tags,
           provenance_hash,

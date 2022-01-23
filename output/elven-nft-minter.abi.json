@@ -32,15 +32,7 @@
                 "type": "u32"
             },
             {
-                "name": "tokens_limit_per_address",
-                "type": "u32"
-            },
-            {
                 "name": "royalties",
-                "type": "BigUint"
-            },
-            {
-                "name": "selling_price",
                 "type": "BigUint"
             },
             {
@@ -110,24 +102,9 @@
                 {
                     "name": "amount_of_tokens_per_drop",
                     "type": "u32"
-                }
-            ],
-            "outputs": []
-        },
-        {
-            "name": "unsetDrop",
-            "onlyOwner": true,
-            "mutability": "mutable",
-            "inputs": [],
-            "outputs": []
-        },
-        {
-            "name": "setNewPrice",
-            "onlyOwner": true,
-            "mutability": "mutable",
-            "inputs": [
+                },
                 {
-                    "name": "price",
+                    "name": "price_per_single_token",
                     "type": "BigUint"
                 }
             ],
@@ -150,18 +127,6 @@
             "outputs": []
         },
         {
-            "name": "setNewTokensLimitPerAddress",
-            "onlyOwner": true,
-            "mutability": "mutable",
-            "inputs": [
-                {
-                    "name": "limit",
-                    "type": "u32"
-                }
-            ],
-            "outputs": []
-        },
-        {
             "name": "giveaway",
             "onlyOwner": true,
             "mutability": "mutable",
@@ -178,18 +143,30 @@
             "outputs": []
         },
         {
-            "name": "mint",
+            "name": "clearing",
+            "onlyOwner": true,
+            "mutability": "mutable",
+            "inputs": [],
+            "outputs": []
+        },
+        {
+            "name": "withdraw_bid",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "drop_id",
+                    "type": "u32"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "bid",
             "mutability": "mutable",
             "payableInTokens": [
                 "EGLD"
             ],
-            "inputs": [
-                {
-                    "name": "token_amount",
-                    "type": "optional<u32>",
-                    "multi_arg": true
-                }
-            ],
+            "inputs": [],
             "outputs": []
         },
         {
@@ -199,9 +176,29 @@
             "outputs": []
         },
         {
+            "name": "checkEligibility",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "drop_id",
+                    "type": "u32"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "bool"
+                }
+            ]
+        },
+        {
             "name": "getDropTokensLeft",
             "mutability": "readonly",
-            "inputs": [],
+            "inputs": [
+                {
+                    "name": "drop_id",
+                    "type": "u32"
+                }
+            ],
             "outputs": [
                 {
                     "type": "u32"
@@ -239,16 +236,6 @@
             ]
         },
         {
-            "name": "getNftPrice",
-            "mutability": "readonly",
-            "inputs": [],
-            "outputs": [
-                {
-                    "type": "BigUint"
-                }
-            ]
-        },
-        {
             "name": "getProvenanceHash",
             "mutability": "readonly",
             "inputs": [],
@@ -259,22 +246,16 @@
             ]
         },
         {
-            "name": "getTokensLimitPerAddress",
-            "mutability": "readonly",
-            "inputs": [],
-            "outputs": [
-                {
-                    "type": "u32"
-                }
-            ]
-        },
-        {
-            "name": "getTokensMintedPerAddress",
+            "name": "getTokensMintedPerAddressPerDrop",
             "mutability": "readonly",
             "inputs": [
                 {
                     "name": "address",
                     "type": "Address"
+                },
+                {
+                    "name": "drop_id",
+                    "type": "u32"
                 }
             ],
             "outputs": [
