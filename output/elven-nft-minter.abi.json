@@ -178,6 +178,13 @@
             "outputs": []
         },
         {
+            "name": "claimScFunds",
+            "onlyOwner": true,
+            "mutability": "mutable",
+            "inputs": [],
+            "outputs": []
+        },
+        {
             "name": "mint",
             "mutability": "mutable",
             "payableInTokens": [

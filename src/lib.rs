@@ -214,6 +214,21 @@ pub trait ElvenTools {
         Ok(())
     }
 
+    // As an owner, claim Smart Contract balance - temporary solution for royalities, the SC has to be payable to be able to get royalties
+    #[only_owner]
+    #[endpoint(claimScFunds)]
+    fn claim_sc_funds(&self) -> SCResult<()> {
+        self.send().direct_egld(
+            &self.blockchain().get_caller(),
+            &self
+                .blockchain()
+                .get_sc_balance(&TokenIdentifier::egld(), 0),
+            &[],
+        );
+
+        Ok(())
+    }
+
     // Main mint function - takes the payment sum for all tokens to mint.
     #[payable("EGLD")]
     #[endpoint(mint)]
