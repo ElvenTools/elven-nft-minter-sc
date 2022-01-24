@@ -1,59 +1,59 @@
-### Example Smart Contract to be used with [elven-mint](https://github.com/juliancwirko/elven-mint)
+### NFT minter Smart Contract 
 
-**Please test it before using it for the real stuff. It can always be buggy. Not reviewed in any form and not tested in the mainnet! Still work in progress on the development branch!**
+🚨 Not enough tests! As for the mainnet, use it at your own risk! 🚨
 
-Based on official [nft-minter](https://github.com/ElrondNetwork/elrond-wasm-rs/tree/master/contracts/examples/nft-minter) example.
+**You can use [elven-tools-cli](https://github.com/juliancwirko/elven-tools-cli) for deployment and interactions!**
 
-### Pre requirements:
+### What is it?
 
-1. Installed the latest version of [erdpy](https://docs.elrond.com/sdk-and-tools/erdpy/installing-erdpy/)
-2. Wallet pem file. How to derive it from seed phrases: [here](https://docs.elrond.com/sdk-and-tools/erdpy/deriving-the-wallet-pem-file/)
+You are reading about the Smart Contract designed for the Elrond blockchain. Its primary purpose is to provide a simple logic for minting and buying a previously configured collection of NFTs. It does it in a randomized way. Version 1 of it supports:
 
-### Usage (devnet):
+- issuing the collection token
+- setting the create role
+- pausing/unpausing the process
+- random mint and distribution
+- minting multiple NFTs in one transaction
+- giveaway options
+- possibility to split the process into drops/waves
+- claiming the developer rewards
+- changing basic setup where it is possible
 
-**You can also use [elven-tools-cli](https://github.com/juliancwirko/elven-tools-cli) for that!**
+Check the [abi](https://github.com/juliancwirko/elven-nft-minter-sc/blob/main/output/elven-nft-minter.abi.json) file for more information.
 
-1. Clone the repo
+Also, check how simple it is to deploy and interact with it using [elven-tools-cli](https://github.com/juliancwirko/elven-tools-cli).
 
-2. `cd elven-nft-minter-sc`
+### Other ways of using it
 
-3. Build the SC using `erdpy contract build`
+You can always clone it and change it as you need. The best is to use the Elven Tools CLI tool, which can also be configured after changes here. But nothing stops you from using the [erdpy](https://docs.elrond.com/sdk-and-tools/erdpy/erdpy/) and interacting with this Smart Contract. It is all up to you.
 
-4. Deploy the SC using (one level up from elven-nft-minter-sc directory):
+### Limitations and caveats
 
-```
-erdpy --verbose contract deploy --chain="D" --project=elven-nft-minter-sc --pem="wallet.pem" --gas-limit=80000000 --proxy="https://devnet-gateway.elrond.com" --recall-nonce --send
-```
+- Remember that it is most likely that because of the open-source nature of this Smart Contract, it won't be used only in a way that everyone would want to, be aware that you can always change the names of the endpoints in the Smart Contract. You can even deploy a couple of them. In the last minutes before the mint decide to use one of them. This will limit the bots. Remember always to inform which one is the official one.
+- Smart Contract in version 1 doesn't have many mechanisms which will strongly limit unwanted behaviors. It only implements random minting, but in version 2, there will be more mechanisms for fair launches.
 
-You'll get back your smart contract address.
+#### TODO:
+- better docs
+- tests
+- additional nft roles management (optional with default set) (???)
+- perf rewrites (help needed)
+- manual testing (help needed)
 
-(remember to provide proper paths for --project and --pem file)
+#### TODO for v2:
+- bid, clear, mint for only eligible
+- possibility to split into drops, presale (with allowlist option)
+- rethink usage of ESDTRoleNFTUpdateAttributes and ESDTRoleNFTAddURI (???)
 
-5. Issue collection ESDT token
+**Rust devs, I would appreciate it if you could leave your insights ❤️**
 
-```
-erdpy --verbose contract call <smart_contract_address_here> --chain="D" --pem="wallet.pem" --gas-limit=60000000 --function="issueToken" --value=50000000000000000 --arguments 0x454c5557 0x454c5557 --proxy="https://devnet-gateway.elrond.com" --recall-nonce --send
+### Contact
 
-```
+- [Telegram](https://t.me/juliancwirko)
+- [Twitter](https://twitter.com/JulianCwirko)
 
-arguments:
-- token name in hex format (example: 0x + 454c5557 which is 0x + ELUW)
-- token ticker in hex format (example: 0x + 454c5557 which is 0x + ELUW)
+### Issues and ideas
 
-([elrond-converters](http://207.244.241.38/elrond-converters/))
+Please post issues and ideas [here](https://github.com/juliancwirko/elven-nft-minter-sc/issues).
 
-In return, you will get a token identifier (in hex) that you need to use in the elven-minter tool. **Find it in the explorer: [example](https://devnet-explorer.elrond.com/transactions/76871f78c44299c0ced90e3bd818235918fc56bc2f8ebe1536e4641acfaa3ce9). It is located under SC results, here: `@00@454c55572d336135646363` where hex value 454c55572d336135646363 is in fact ELUW-3a5dcc. And this is what we need. It is what we need to pass in the elven-mint config. It is a collection (ESDT token).**
+### License
 
-6. Add special roles
-
-```
-erdpy --verbose contract call <smart_contract_address_here> --chain="D" --pem="wallet.pem" --gas-limit=60000000 --function="setLocalRoles" --proxy="https://devnet-gateway.elrond.com" --recall-nonce --send
-```
-
-7. Grab the Smart Contract address and token id and use [nft-art-maker](https://github.com/juliancwirko/nft-art-maker) or [elven-mint](https://github.com/juliancwirko/elven-mint) as helpers in mass minting.
-
-### Learning resources
-
-- [julian.io](https://www.julian.io/)
-- [Youtube channel with walkthrough videos](https://www.youtube.com/channel/UCaj-mgcY9CWbLdZsC5Gt00g) (give me a sub! ;))
-- (full path with video soon)
+MIT + GPLv3 (Elrond tooling)

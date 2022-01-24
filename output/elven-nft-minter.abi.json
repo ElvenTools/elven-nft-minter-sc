@@ -1,24 +1,64 @@
 {
     "buildInfo": {
         "rustc": {
-            "version": "1.54.0-nightly",
-            "commitHash": "f58631b4503b5cd34163cf9c3ff19dc3e0c8a09e",
-            "commitDate": "2021-05-28",
+            "version": "1.59.0-nightly",
+            "commitHash": "e012a191d768adeda1ee36a99ef8b92d51920154",
+            "commitDate": "2022-01-06",
             "channel": "Nightly",
-            "short": "rustc 1.54.0-nightly (f58631b45 2021-05-28)"
+            "short": "rustc 1.59.0-nightly (e012a191d 2022-01-06)"
         },
         "contractCrate": {
             "name": "elven-nft-minter",
-            "version": "0.1.0"
+            "version": "1.0.0"
         },
         "framework": {
             "name": "elrond-wasm",
-            "version": "0.24.0"
+            "version": "0.26.0"
         }
     },
     "name": "ElvenTools",
     "constructor": {
-        "inputs": [],
+        "inputs": [
+            {
+                "name": "image_base_cid",
+                "type": "bytes"
+            },
+            {
+                "name": "metadata_base_cid",
+                "type": "bytes"
+            },
+            {
+                "name": "amount_of_tokens",
+                "type": "u32"
+            },
+            {
+                "name": "tokens_limit_per_address",
+                "type": "u32"
+            },
+            {
+                "name": "royalties",
+                "type": "BigUint"
+            },
+            {
+                "name": "selling_price",
+                "type": "BigUint"
+            },
+            {
+                "name": "file_extension",
+                "type": "optional<bytes>",
+                "multi_arg": true
+            },
+            {
+                "name": "tags",
+                "type": "optional<bytes>",
+                "multi_arg": true
+            },
+            {
+                "name": "provenance_hash",
+                "type": "optional<bytes>",
+                "multi_arg": true
+            }
+        ],
         "outputs": []
     },
     "endpoints": [
@@ -49,63 +89,134 @@
             "outputs": []
         },
         {
-            "name": "createNft",
+            "name": "pauseMinting",
+            "onlyOwner": true,
+            "mutability": "mutable",
+            "inputs": [],
+            "outputs": []
+        },
+        {
+            "name": "startMinting",
+            "onlyOwner": true,
+            "mutability": "mutable",
+            "inputs": [],
+            "outputs": []
+        },
+        {
+            "name": "setDrop",
             "onlyOwner": true,
             "mutability": "mutable",
             "inputs": [
                 {
-                    "name": "token",
-                    "type": "TokenIdentifier"
-                },
-                {
-                    "name": "name",
-                    "type": "bytes"
-                },
-                {
-                    "name": "uri",
-                    "type": "bytes"
-                },
-                {
-                    "name": "attributes",
-                    "type": "bytes"
-                },
-                {
-                    "name": "hash",
-                    "type": "bytes"
-                },
-                {
-                    "name": "royalties",
-                    "type": "BigUint"
-                },
-                {
-                    "name": "selling_price",
-                    "type": "BigUint"
-                },
-                {
-                    "name": "with_claim",
-                    "type": "optional<bool>",
-                    "multi_arg": true
+                    "name": "amount_of_tokens_per_drop",
+                    "type": "u32"
                 }
             ],
-            "outputs": [
-                {
-                    "type": "u64"
-                }
-            ]
+            "outputs": []
         },
         {
-            "name": "buyNft",
+            "name": "unsetDrop",
+            "onlyOwner": true,
+            "mutability": "mutable",
+            "inputs": [],
+            "outputs": []
+        },
+        {
+            "name": "setNewPrice",
+            "onlyOwner": true,
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "price",
+                    "type": "BigUint"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "changeBaseCids",
+            "onlyOwner": true,
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "image_base_cid",
+                    "type": "bytes"
+                },
+                {
+                    "name": "metadata_base_cid",
+                    "type": "bytes"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "setNewTokensLimitPerAddress",
+            "onlyOwner": true,
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "limit",
+                    "type": "u32"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "giveaway",
+            "onlyOwner": true,
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "address",
+                    "type": "Address"
+                },
+                {
+                    "name": "amount_of_tokens",
+                    "type": "u32"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "mint",
             "mutability": "mutable",
             "payableInTokens": [
                 "EGLD"
             ],
             "inputs": [
                 {
-                    "name": "nft_nonce",
-                    "type": "u64"
+                    "name": "token_amount",
+                    "type": "optional<u32>",
+                    "multi_arg": true
                 }
             ],
             "outputs": []
+        },
+        {
+            "name": "shuffle",
+            "mutability": "mutable",
+            "inputs": [],
+            "outputs": []
+        },
+        {
+            "name": "getDropTokensLeft",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "u32"
+                }
+            ]
+        },
+        {
+            "name": "getTotalTokensLeft",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "u32"
+                }
+            ]
         },
         {
             "name": "getNftTokenId",
@@ -118,17 +229,57 @@
             ]
         },
         {
+            "name": "getNftTokenName",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "bytes"
+                }
+            ]
+        },
+        {
             "name": "getNftPrice",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "BigUint"
+                }
+            ]
+        },
+        {
+            "name": "getProvenanceHash",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "bytes"
+                }
+            ]
+        },
+        {
+            "name": "getTokensLimitPerAddress",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "u32"
+                }
+            ]
+        },
+        {
+            "name": "getTokensMintedPerAddress",
             "mutability": "readonly",
             "inputs": [
                 {
-                    "name": "nft_nonce",
-                    "type": "u64"
+                    "name": "address",
+                    "type": "Address"
                 }
             ],
             "outputs": [
                 {
-                    "type": "BigUint"
+                    "type": "u32"
                 }
             ]
         }

@@ -7,13 +7,26 @@
 elrond_wasm_node::wasm_endpoints! {
     elven_nft_minter
     (
-        init
         callBack
-        buyNft
-        createNft
+        changeBaseCids
+        getDropTokensLeft
         getNftPrice
         getNftTokenId
+        getNftTokenName
+        getProvenanceHash
+        getTokensLimitPerAddress
+        getTokensMintedPerAddress
+        getTotalTokensLeft
+        giveaway
         issueToken
+        mint
+        pauseMinting
+        setDrop
         setLocalRoles
+        setNewPrice
+        setNewTokensLimitPerAddress
+        shuffle
+        startMinting
+        unsetDrop
     )
 }
