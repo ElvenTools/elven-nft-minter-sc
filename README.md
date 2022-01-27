@@ -1,5 +1,8 @@
 ### NFT minter Smart Contract 
 
+- Docs: [www.elven.tools](https://www.elven.tools)
+- Intro video: [youtu.be/szkNE_qOy6Q](https://youtu.be/szkNE_qOy6Q)
+
 🚨 Not enough tests! As for the mainnet, use it at your own risk! 🚨
 
 **You can use [elven-tools-cli](https://github.com/juliancwirko/elven-tools-cli) for deployment and interactions!**
