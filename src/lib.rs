@@ -365,7 +365,8 @@ pub trait ElvenTools {
 
     #[endpoint(shuffle)]
     fn shuffle(&self) -> SCResult<()> {
-        self.do_shuffle();
+        let next_index_to_mint = self.do_shuffle();
+        self.next_index_to_mint().set(next_index_to_mint);
 
         Ok(())
     }
