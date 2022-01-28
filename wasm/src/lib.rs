@@ -11,12 +11,14 @@ elrond_wasm_node::wasm_endpoints! {
         changeBaseCids
         claimScFunds
         getDropTokensLeft
+        getMintedPerAddressPerDrop
+        getMintedPerAddressTotal
         getNftPrice
         getNftTokenId
         getNftTokenName
         getProvenanceHash
-        getTokensLimitPerAddress
-        getTokensMintedPerAddress
+        getTokensLimitPerAddressPerDrop
+        getTokensLimitPerAddressTotal
         getTotalTokensLeft
         giveaway
         issueToken

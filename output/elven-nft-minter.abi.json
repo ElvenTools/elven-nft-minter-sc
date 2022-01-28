@@ -9,7 +9,7 @@
         },
         "contractCrate": {
             "name": "elven-nft-minter",
-            "version": "1.0.0"
+            "version": "1.1.0"
         },
         "framework": {
             "name": "elrond-wasm",
@@ -110,6 +110,11 @@
                 {
                     "name": "amount_of_tokens_per_drop",
                     "type": "u32"
+                },
+                {
+                    "name": "tokens_limit_per_address_per_drop",
+                    "type": "optional<u32>",
+                    "multi_arg": true
                 }
             ],
             "outputs": []
@@ -226,6 +231,21 @@
             ]
         },
         {
+            "name": "getMintedPerAddressPerDrop",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "address",
+                    "type": "Address"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "u32"
+                }
+            ]
+        },
+        {
             "name": "getNftTokenId",
             "mutability": "readonly",
             "inputs": [],
@@ -266,7 +286,7 @@
             ]
         },
         {
-            "name": "getTokensLimitPerAddress",
+            "name": "getTokensLimitPerAddressTotal",
             "mutability": "readonly",
             "inputs": [],
             "outputs": [
@@ -276,7 +296,7 @@
             ]
         },
         {
-            "name": "getTokensMintedPerAddress",
+            "name": "getMintedPerAddressTotal",
             "mutability": "readonly",
             "inputs": [
                 {
@@ -284,6 +304,16 @@
                     "type": "Address"
                 }
             ],
+            "outputs": [
+                {
+                    "type": "u32"
+                }
+            ]
+        },
+        {
+            "name": "getTokensLimitPerAddressPerDrop",
+            "mutability": "readonly",
+            "inputs": [],
             "outputs": [
                 {
                     "type": "u32"

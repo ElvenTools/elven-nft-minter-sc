@@ -37,7 +37,7 @@
                         "str:provenanceHash": "0x70726f76656e616e636548617368",
                         "str:royalties": "0x03e8",
                         "str:tags": "0x746167733a746167312c74616732",
-                        "str:tokensLimitPerAddress": "0x03"
+                        "str:tokensLimitPerAddressTotal": "0x03"
                     },
                     "code": "file:../output/elven-nft-minter.wasm",
                     "owner": "0x66687aadf862bd776c8fc18b8e9f8e20089714856ee233b3902a591d0d5f2925"

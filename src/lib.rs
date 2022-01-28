@@ -44,7 +44,7 @@ pub trait ElvenTools {
         self.image_base_cid().set(&image_base_cid);
         self.metadata_base_cid().set(&metadata_base_cid);
         self.amount_of_tokens_total().set(&amount_of_tokens);
-        self.tokens_limit_per_address()
+        self.tokens_limit_per_address_total()
             .set(&tokens_limit_per_address);
         self.provenance_hash()
             .set(&provenance_hash.into_option().unwrap_or_default());
@@ -134,8 +134,31 @@ pub trait ElvenTools {
 
     #[only_owner]
     #[endpoint(setDrop)]
-    fn set_drop(&self, amount_of_tokens_per_drop: u32) -> SCResult<()> {
+    fn set_drop(
+        &self,
+        amount_of_tokens_per_drop: u32,
+        #[var_args] tokens_limit_per_address_per_drop: OptionalArg<u32>,
+    ) -> SCResult<()> {
+        let total_tokens_left = self.total_tokens_left().ok().unwrap_or_default();
+
+        require!(
+            amount_of_tokens_per_drop <= total_tokens_left,
+            "The number of tokens per drop can't be higher than the total amount of tokens left!"
+        );
+
+        let tokens_limit = tokens_limit_per_address_per_drop
+            .into_option()
+            .unwrap_or_default();
+        let tokens_limit_total = self.tokens_limit_per_address_total().get();
+
+        require!(tokens_limit <= tokens_limit_total, "The tokens limit per address per drop should be smaller or equal to the total limit of tokens per address!");
+
+        if (tokens_limit > 0) {
+            self.tokens_limit_per_address_per_drop().set(tokens_limit);
+        }
+
         self.minted_indexes_by_drop().clear();
+        self.minted_per_address_per_drop().clear();
         self.amount_of_tokens_per_drop()
             .set(&amount_of_tokens_per_drop);
 
@@ -147,7 +170,8 @@ pub trait ElvenTools {
     fn unset_drop(&self) -> SCResult<()> {
         self.amount_of_tokens_per_drop().clear();
         self.minted_indexes_by_drop().clear();
-
+        self.tokens_limit_per_address_per_drop().clear();
+        self.minted_per_address_per_drop().clear();
         Ok(())
     }
 
@@ -183,7 +207,7 @@ pub trait ElvenTools {
     #[only_owner]
     #[endpoint(setNewTokensLimitPerAddress)]
     fn set_new_tokens_limit_per_address(&self, limit: u32) -> SCResult<()> {
-        self.tokens_limit_per_address().set(limit);
+        self.tokens_limit_per_address_total().set(limit);
         Ok(())
     }
 
@@ -261,8 +285,8 @@ pub trait ElvenTools {
 
         let caller = self.blockchain().get_caller();
 
-        let minted_per_address = self.minted_per_address(&caller).get();
-        let tokens_limit_per_address = self.tokens_limit_per_address().get();
+        let minted_per_address = self.minted_per_address_total(&caller).get();
+        let tokens_limit_per_address = self.tokens_limit_per_address_total().get();
 
         let tokens_left_to_mint = tokens_limit_per_address - minted_per_address;
 
@@ -274,6 +298,23 @@ pub trait ElvenTools {
             tokens_left_to_mint >= tokens,
             "You can't mint such an amount of tokens. Check the limits by one address!"
         );
+
+        // Check if there is a drop set and the limits per address for the drop are set
+        if (!self.tokens_limit_per_address_per_drop().is_empty()) {
+            let minted_per_address_per_drop = self
+                .minted_per_address_per_drop()
+                .get(&caller)
+                .unwrap_or_default();
+            let tokens_limit_per_address_per_drop = self.tokens_limit_per_address_per_drop().get();
+
+            let tokens_left_to_mint_per_drop =
+                tokens_limit_per_address_per_drop - minted_per_address_per_drop;
+
+            require!(
+            tokens_left_to_mint_per_drop >= tokens,
+            "You can't mint such an amount of tokens. Check the limits by one address per drop!"
+          );
+        }
 
         let single_payment_amount = payment_amount / tokens;
 
@@ -349,9 +390,26 @@ pub trait ElvenTools {
             &[],
         );
 
-        self.minted_per_address(&caller).update(|sum| *sum += 1);
-
         if (payment_amount > 0) {
+            self.minted_per_address_total(&caller)
+                .update(|sum| *sum += 1);
+
+            let tokens_limit_per_address_per_drop = self.tokens_limit_per_address_per_drop().get();
+
+            if (tokens_limit_per_address_per_drop > 0) {
+                let existing_address_value = self
+                    .minted_per_address_per_drop()
+                    .get(&caller)
+                    .unwrap_or_default();
+                if (existing_address_value > 0) {
+                    let next_value = existing_address_value + 1;
+                    self.minted_per_address_per_drop()
+                        .insert(caller, next_value);
+                } else {
+                    self.minted_per_address_per_drop().insert(caller, 1);
+                }
+            }
+
             let payment_nonce: u64 = 0;
             let payment_token = &TokenIdentifier::egld();
 
@@ -522,6 +580,16 @@ pub trait ElvenTools {
         Ok(left_tokens)
     }
 
+    #[view(getMintedPerAddressPerDrop)]
+    fn get_minted_per_address_per_drop(&self, address: ManagedAddress) -> SCResult<u32> {
+        let minted_per_address_per_drop = self
+            .minted_per_address_per_drop()
+            .get(&address)
+            .unwrap_or_default();
+
+        Ok(minted_per_address_per_drop)
+    }
+
     #[view(getNftTokenId)]
     #[storage_mapper("nftTokenId")]
     fn nft_token_id(&self) -> SingleValueMapper<TokenIdentifier>;
@@ -538,13 +606,20 @@ pub trait ElvenTools {
     #[storage_mapper("provenanceHash")]
     fn provenance_hash(&self) -> SingleValueMapper<ManagedBuffer>;
 
-    #[view(getTokensLimitPerAddress)]
-    #[storage_mapper("tokensLimitPerAddress")]
-    fn tokens_limit_per_address(&self) -> SingleValueMapper<u32>;
+    #[view(getTokensLimitPerAddressTotal)]
+    #[storage_mapper("tokensLimitPerAddressTotal")]
+    fn tokens_limit_per_address_total(&self) -> SingleValueMapper<u32>;
 
-    #[view(getTokensMintedPerAddress)]
-    #[storage_mapper("mintedPerAddress")]
-    fn minted_per_address(&self, address: &ManagedAddress) -> SingleValueMapper<u32>;
+    #[view(getMintedPerAddressTotal)]
+    #[storage_mapper("mintedPerAddressTotal")]
+    fn minted_per_address_total(&self, address: &ManagedAddress) -> SingleValueMapper<u32>;
+
+    #[view(getTokensLimitPerAddressPerDrop)]
+    #[storage_mapper("tokensLimitPerAddressPerDrop")]
+    fn tokens_limit_per_address_per_drop(&self) -> SingleValueMapper<u32>;
+
+    #[storage_mapper("mintedPerAddressPerDrop")]
+    fn minted_per_address_per_drop(&self) -> MapMapper<ManagedAddress, u32>;
 
     #[storage_mapper("iamgeBaseCid")]
     fn image_base_cid(&self) -> SingleValueMapper<ManagedBuffer>;
