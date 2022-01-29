@@ -35,7 +35,7 @@ You can always clone it and change it as you need. The best is to use the Elven 
 - Smart Contract in version 1 doesn't have many mechanisms which will strongly limit unwanted behaviors. It only implements random minting, but in version 2, there will be more mechanisms for fair launches.
 
 #### TODO:
-- implement `esdt_nft_create_as_caller` (waits for chain updates, it won't work for now)
+- implement payable by contract only when it is available
 - better docs
 - tests
 - additional nft roles management (optional with default set) (???)
