@@ -24,6 +24,7 @@ elrond_wasm_node::wasm_endpoints! {
         issueToken
         mint
         pauseMinting
+        populateIndexes
         setDrop
         setLocalRoles
         setNewPrice

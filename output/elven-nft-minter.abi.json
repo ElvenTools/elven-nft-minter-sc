@@ -205,6 +205,18 @@
             "outputs": []
         },
         {
+            "name": "populateIndexes",
+            "onlyOwner": true,
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "amount",
+                    "type": "u32"
+                }
+            ],
+            "outputs": []
+        },
+        {
             "name": "shuffle",
             "mutability": "mutable",
             "inputs": [],

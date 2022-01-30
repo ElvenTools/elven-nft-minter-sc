@@ -59,9 +59,6 @@ pub trait ElvenTools {
         let paused = true;
         self.paused().set(&paused);
 
-        let first_index = self.do_shuffle();
-        self.next_index_to_mint().set(&first_index);
-
         Ok(())
     }
 
@@ -262,6 +259,10 @@ pub trait ElvenTools {
         #[var_args] token_amount: OptionalArg<u32>,
     ) -> SCResult<()> {
         require!(
+            self.initial_shuffle_triggered().get(),
+            "Run the shuffle mechanism at least once!"
+        );
+        require!(
             self.paused().is_empty(),
             "The minting is paused or haven't started yet!"
         );
@@ -338,21 +339,23 @@ pub trait ElvenTools {
         payment_amount: BigUint,
         #[var_args] giveaway_address: OptionalArg<ManagedAddress>,
     ) -> SCResult<()> {
+        let next_index_to_mint = self.next_index_to_mint().get();
+
         let amount = &BigUint::from(NFT_AMOUNT);
 
         let token = self.nft_token_id().get();
-        let token_name = self.build_token_name_buffer();
+        let token_name = self.build_token_name_buffer(next_index_to_mint);
 
         let royalties = self.royalties().get();
 
-        let attributes = self.build_attributes_buffer();
+        let attributes = self.build_attributes_buffer(next_index_to_mint);
 
         let attributes_hash = self
             .crypto()
             .sha256_legacy(&attributes.to_boxed_bytes().as_slice());
         let hash_buffer = ManagedBuffer::from(attributes_hash.as_bytes());
 
-        let uris = self.build_uris_vec();
+        let uris = self.build_uris_vec(next_index_to_mint);
 
         let nonce = self.send().esdt_nft_create(
             &token,
@@ -415,19 +418,62 @@ pub trait ElvenTools {
                 .direct(&owner, &payment_token, payment_nonce, &payment_amount, &[]);
         }
 
-        // Choose next index to mint here (random)
-        self.handle_next_index_setup();
+        // Choose next index to mint here from shuffled Vec
+        self.handle_next_index_setup(next_index_to_mint);
+
+        Ok(())
+    }
+
+    #[only_owner]
+    #[endpoint(populateIndexes)]
+    fn populate_indexes(&self, amount: u32) -> SCResult<()> {
+      let amount_of_tokens = self.amount_of_tokens_total().get();
+      let mut v_mapper = self.tokens_left_to_mint();
+      let v_mapper_len = v_mapper.len() as u32;
+      let total_amount = v_mapper_len + amount;
+      require!(amount > 0 && total_amount <= amount_of_tokens, "Wrong amount of tokens!");
+      
+      let mut vec: Vec<u32> = Vec::new();
+      let from = v_mapper_len + 1;
+      let to = from + amount - 1;
+      for i in from..=to {
+          vec.push(i);
+      }
+      v_mapper.extend_from_slice(&vec);
 
         Ok(())
     }
 
     #[endpoint(shuffle)]
     fn shuffle(&self) -> SCResult<()> {
-        let next_index_to_mint = self.do_shuffle();
-        self.next_index_to_mint().set(next_index_to_mint);
+      let v_mapper = self.tokens_left_to_mint();
+      require!(!v_mapper.is_empty(), "There is nothing to shuffle. Indexes not populated!");
 
-        Ok(())
+      let initial_shuffle_triggered = self.initial_shuffle_triggered().get();
+
+      if !initial_shuffle_triggered {
+        self.initial_shuffle_triggered().set(true);
+      }
+      
+      self.do_shuffle();
+
+      Ok(())
     }
+
+    fn do_shuffle(&self) {
+      let mut vec = self.tokens_left_to_mint();
+
+      let vec_len = vec.len();
+      let mut rand_source = RandomnessSource::<Self::Api>::new();
+
+      let index = rand_source.next_usize_in_range(1, vec_len + 1);
+
+      let choosen_item = vec.get(index);
+
+      vec.swap_remove(index);
+
+      self.next_index_to_mint().set(choosen_item);
+  }
 
     #[callback]
     fn issue_callback(&self, #[call_result] result: ManagedAsyncCallResult<TokenIdentifier>) {
@@ -446,57 +492,31 @@ pub trait ElvenTools {
         }
     }
 
-    fn do_shuffle(&self) -> u32 {
+    fn initial_random_mint_index(&self) -> u32 {
         let total_tokens = self.amount_of_tokens_total().get();
-        let minted_indexes_mapper = self.minted_indexes_total();
-
-        let mut vec: Vec<u32> = Vec::new();
-
-        for i in 1..=total_tokens {
-          if !minted_indexes_mapper.contains(&i) {
-            vec.push(i);
-          }
-        }
-
-        let vec_len = vec.len();
         let mut rand_source = RandomnessSource::<Self::Api>::new();
+        let rand_index = rand_source.next_u32_in_range(1, total_tokens + 1);
 
-        let indx: u32;
-
-        if vec_len == 1 {
-          indx = vec[0];
-        } else {
-          for i in 0..vec_len {
-            let rand_index = rand_source.next_usize_in_range(i, vec_len);
-            let first_item = vec[i];
-            let second_item = vec[rand_index];
-
-            vec[i] = second_item;
-            vec[rand_index] = first_item;
-          }
-
-          indx = vec[0];
-        }
-
-        indx
+        rand_index
     }
 
-    fn handle_next_index_setup(&self) {
-        let minted_index = self.next_index_to_mint().get();
-        let drop_amount = self.amount_of_tokens_per_drop().get();
+    fn handle_next_index_setup(&self, minted_index: u32) {
         self.minted_indexes_total().insert(minted_index);
+        let drop_amount = self.amount_of_tokens_per_drop().get();
         if drop_amount > 0 {
             self.minted_indexes_by_drop().insert(minted_index);
         }
 
-        let next_index = self.do_shuffle();
-        self.next_index_to_mint().set(&next_index);
+        let total_tokens_left = self.total_tokens_left().ok().unwrap_or_default();
+
+        if total_tokens_left > 0 {
+            self.do_shuffle();
+        }
     }
 
-    fn build_uris_vec(&self) -> ManagedVec<ManagedBuffer> {
+    fn build_uris_vec(&self, index_to_mint: u32) -> ManagedVec<ManagedBuffer> {
         use alloc::string::ToString;
 
-        let index_to_mint = self.next_index_to_mint().get();
         let mut uris = ManagedVec::new();
 
         let cid = self.image_base_cid().get();
@@ -523,10 +543,9 @@ pub trait ElvenTools {
     }
 
     // This can be probably optimized with attributes struct, had problems with decoding on the api side
-    fn build_attributes_buffer(&self) -> ManagedBuffer {
+    fn build_attributes_buffer(&self, index_to_mint: u32) -> ManagedBuffer {
         use alloc::string::ToString;
 
-        let index_to_mint = self.next_index_to_mint().get();
         let metadata_key_name = ManagedBuffer::new_from_bytes(METADATA_KEY_NAME);
         let metadata_index_file =
             ManagedBuffer::new_from_bytes(index_to_mint.to_string().as_bytes());
@@ -549,12 +568,11 @@ pub trait ElvenTools {
         attributes
     }
 
-    fn build_token_name_buffer(&self) -> ManagedBuffer {
+    fn build_token_name_buffer(&self, index_to_mint: u32) -> ManagedBuffer {
         use alloc::string::ToString;
 
         let mut full_token_name = ManagedBuffer::new();
         let token_name_from_storage = self.nft_token_name().get();
-        let index_to_mint = self.next_index_to_mint().get();
         let token_index = ManagedBuffer::new_from_bytes(index_to_mint.to_string().as_bytes());
         let hash_sign = ManagedBuffer::new_from_bytes(" #".as_bytes());
 
@@ -659,9 +677,6 @@ pub trait ElvenTools {
     #[storage_mapper("mintedIndexesByDrop")]
     fn minted_indexes_by_drop(&self) -> SetMapper<u32>;
 
-    #[storage_mapper("nextIndexToMint")]
-    fn next_index_to_mint(&self) -> SingleValueMapper<u32>;
-
     #[storage_mapper("royalties")]
     fn royalties(&self) -> SingleValueMapper<BigUint>;
 
@@ -673,4 +688,13 @@ pub trait ElvenTools {
 
     #[storage_mapper("amountOfTokensPerDrop")]
     fn amount_of_tokens_per_drop(&self) -> SingleValueMapper<u32>;
+
+    #[storage_mapper("nextIndexToMint")]
+    fn next_index_to_mint(&self) -> SingleValueMapper<u32>;
+
+    #[storage_mapper("tokensLeftToMint")]
+    fn tokens_left_to_mint(&self) -> VecMapper<u32>;
+
+    #[storage_mapper("initialShuffleTriggered")]
+    fn initial_shuffle_triggered(&self) -> SingleValueMapper<bool>;
 }
