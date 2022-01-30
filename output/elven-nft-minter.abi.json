@@ -1,11 +1,11 @@
 {
     "buildInfo": {
         "rustc": {
-            "version": "1.59.0-nightly",
-            "commitHash": "e012a191d768adeda1ee36a99ef8b92d51920154",
-            "commitDate": "2022-01-06",
+            "version": "1.60.0-nightly",
+            "commitHash": "e0a55f4491a729bffc63b402ba903d90858c806b",
+            "commitDate": "2022-01-28",
             "channel": "Nightly",
-            "short": "rustc 1.59.0-nightly (e012a191d 2022-01-06)"
+            "short": "rustc 1.60.0-nightly (e0a55f449 2022-01-28)"
         },
         "contractCrate": {
             "name": "elven-nft-minter",
@@ -159,6 +159,20 @@
                     "type": "u32"
                 }
             ],
+            "outputs": []
+        },
+        {
+            "name": "enableMintByOwnerOnly",
+            "onlyOwner": true,
+            "mutability": "mutable",
+            "inputs": [],
+            "outputs": []
+        },
+        {
+            "name": "disableMintByOwnerOnly",
+            "onlyOwner": true,
+            "mutability": "mutable",
+            "inputs": [],
             "outputs": []
         },
         {

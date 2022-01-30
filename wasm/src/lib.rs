@@ -10,6 +10,8 @@ elrond_wasm_node::wasm_endpoints! {
         callBack
         changeBaseCids
         claimScFunds
+        disableMintByOwnerOnly
+        enableMintByOwnerOnly
         getDropTokensLeft
         getNftPrice
         getNftTokenId

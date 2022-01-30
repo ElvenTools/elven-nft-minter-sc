@@ -56,8 +56,12 @@ pub trait ElvenTools {
                 .into_option()
                 .unwrap_or_else(|| ManagedBuffer::new_from_bytes(DEFAULT_IMG_FILE_EXTENSION)),
         );
+
         let paused = true;
         self.paused().set(&paused);
+        
+        let mint_by_owner_only = false;
+        self.mint_by_owner_only().set(&mint_by_owner_only);
 
         let first_index = self.do_shuffle();
         self.next_index_to_mint().set(&first_index);
@@ -184,6 +188,24 @@ pub trait ElvenTools {
     #[endpoint(setNewTokensLimitPerAddress)]
     fn set_new_tokens_limit_per_address(&self, limit: u32) -> SCResult<()> {
         self.tokens_limit_per_address().set(limit);
+        
+        Ok(())
+    }
+
+    #[only_owner]
+    #[endpoint(enableMintByOwnerOnly)]
+    fn enable_mint_by_owner_only(&self) -> SCResult<()> {
+        let mint_by_owner_only = true;
+        self.mint_by_owner_only().set(&mint_by_owner_only);
+
+        Ok(())
+    }
+    #[only_owner]
+    #[endpoint(disableMintByOwnerOnly)]
+    fn disable_mint_by_owner_only(&self) -> SCResult<()> {
+        let mint_by_owner_only = false;
+        self.mint_by_owner_only().set(&mint_by_owner_only);
+
         Ok(())
     }
 
@@ -260,6 +282,14 @@ pub trait ElvenTools {
         );
 
         let caller = self.blockchain().get_caller();
+        
+        let owner = self.blockchain().get_owner_address();
+        
+        require!(
+            (self.mint_by_owner_only().is_empty() || 
+            (!self.mint_by_owner_only().is_empty() && caller == owner)),
+            "You can't mint as you are not the owner. It is in owner-only mint mode."
+        );
 
         let minted_per_address = self.minted_per_address(&caller).get();
         let tokens_limit_per_address = self.tokens_limit_per_address().get();
@@ -570,6 +600,9 @@ pub trait ElvenTools {
     #[storage_mapper("royalties")]
     fn royalties(&self) -> SingleValueMapper<BigUint>;
 
+    #[storage_mapper("ownerOnlyMint")]
+    fn mint_by_owner_only(&self) -> SingleValueMapper<bool>;
+    
     #[storage_mapper("paused")]
     fn paused(&self) -> SingleValueMapper<bool>;
 
