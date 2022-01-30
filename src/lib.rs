@@ -278,7 +278,7 @@ pub trait ElvenTools {
 
         require!(
             self.get_current_left_tokens_amount() >= tokens,
-            "All tokens have been minted already (totally or per drop)!"
+            "All tokens have been minted already (totally or per drop) or you are requesting to mint too many!"
         );
 
         let caller = self.blockchain().get_caller();
@@ -582,7 +582,7 @@ pub trait ElvenTools {
     #[storage_mapper("metadaBaseCid")]
     fn metadata_base_cid(&self) -> SingleValueMapper<ManagedBuffer>;
 
-    #[storage_mapper("file_extension")]
+    #[storage_mapper("fileExtension")]
     fn file_extension(&self) -> SingleValueMapper<ManagedBuffer>;
 
     #[storage_mapper("amountOfTokensTotal")]
