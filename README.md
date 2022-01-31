@@ -35,17 +35,7 @@ You can always clone it and change it as you need. The best is to use the Elven 
 - Smart Contract in version 1 doesn't have many mechanisms which will strongly limit unwanted behaviors. It only implements random minting, but in version 2, there will be more mechanisms for fair launches.
 
 #### TODO:
-- implement `payable by contract only` when it is available
-- better docs
-- tests
-- additional nft roles management (optional with default set) (???)
-- perf rewrites (help needed)
-- manual testing (help needed)
-
-#### TODO for v2:
-- bid, clear, mint for only eligible
-- possibility to split into drops, presale (with allowlist option)
-- rethink usage of ESDTRoleNFTUpdateAttributes and ESDTRoleNFTAddURI (???)
+- check [issues](https://github.com/juliancwirko/elven-nft-minter-sc/issues)
 
 **Rust devs, I would appreciate it if you could leave your insights ❤️**
 

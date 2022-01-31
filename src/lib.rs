@@ -224,7 +224,7 @@ pub trait ElvenTools {
 
         require!(
             self.get_current_left_tokens_amount() >= amount_of_tokens,
-            "All tokens have been minted already (totally or per drop)!"
+            "All tokens have been minted already or the amount you want to mint is to much. Check limits! (totally or per drop)!"
         );
 
         for _ in 0..amount_of_tokens {
@@ -250,6 +250,41 @@ pub trait ElvenTools {
         Ok(())
     }
 
+    #[only_owner]
+    #[endpoint(populateIndexes)]
+    fn populate_indexes(&self, amount: u32) -> SCResult<()> {
+        let initial_indexes_populate_done = self.initial_indexes_populate_done();
+
+        require!(
+            !initial_indexes_populate_done.get(),
+            "The indexes are already properly populated!"
+        );
+
+        let amount_of_tokens = self.amount_of_tokens_total().get();
+        let mut v_mapper = self.tokens_left_to_mint();
+        let v_mapper_len = v_mapper.len() as u32;
+        let total_amount = v_mapper_len + amount;
+
+        require!(
+            amount > 0 && total_amount <= amount_of_tokens,
+            "Wrong amount of tokens!"
+        );
+
+        let mut vec: Vec<u32> = Vec::new();
+        let from = v_mapper_len + 1;
+        let to = from + amount - 1;
+        for i in from..=to {
+            vec.push(i);
+        }
+        v_mapper.extend_from_slice(&vec);
+
+        if amount_of_tokens == total_amount {
+            self.initial_indexes_populate_done().set(true);
+        }
+
+        Ok(())
+    }
+
     // Main mint function - takes the payment sum for all tokens to mint.
     #[payable("EGLD")]
     #[endpoint(mint)]
@@ -258,6 +293,10 @@ pub trait ElvenTools {
         #[payment_amount] payment_amount: BigUint,
         #[var_args] token_amount: OptionalArg<u32>,
     ) -> SCResult<()> {
+        require!(
+          self.initial_indexes_populate_done().get(),
+          "The indexes are not properly populated! Double check the deployment process and populateIndexes endpoint calls."
+        );
         require!(
             self.initial_shuffle_triggered().get(),
             "Run the shuffle mechanism at least once!"
@@ -281,7 +320,7 @@ pub trait ElvenTools {
 
         require!(
             self.get_current_left_tokens_amount() >= tokens,
-            "All tokens have been minted already (totally or per drop)!"
+            "All tokens have been minted already or the amount you want to mint is to much. Check limits! (totally or per drop)!"
         );
 
         let caller = self.blockchain().get_caller();
@@ -424,56 +463,39 @@ pub trait ElvenTools {
         Ok(())
     }
 
-    #[only_owner]
-    #[endpoint(populateIndexes)]
-    fn populate_indexes(&self, amount: u32) -> SCResult<()> {
-      let amount_of_tokens = self.amount_of_tokens_total().get();
-      let mut v_mapper = self.tokens_left_to_mint();
-      let v_mapper_len = v_mapper.len() as u32;
-      let total_amount = v_mapper_len + amount;
-      require!(amount > 0 && total_amount <= amount_of_tokens, "Wrong amount of tokens!");
-      
-      let mut vec: Vec<u32> = Vec::new();
-      let from = v_mapper_len + 1;
-      let to = from + amount - 1;
-      for i in from..=to {
-          vec.push(i);
-      }
-      v_mapper.extend_from_slice(&vec);
+    #[endpoint(shuffle)]
+    fn shuffle(&self) -> SCResult<()> {
+        let v_mapper = self.tokens_left_to_mint();
+        require!(
+            !v_mapper.is_empty(),
+            "There is nothing to shuffle. Indexes not populated!"
+        );
+
+        let initial_shuffle_triggered = self.initial_shuffle_triggered().get();
+
+        if !initial_shuffle_triggered {
+            self.initial_shuffle_triggered().set(true);
+        }
+
+        self.do_shuffle();
 
         Ok(())
     }
 
-    #[endpoint(shuffle)]
-    fn shuffle(&self) -> SCResult<()> {
-      let v_mapper = self.tokens_left_to_mint();
-      require!(!v_mapper.is_empty(), "There is nothing to shuffle. Indexes not populated!");
-
-      let initial_shuffle_triggered = self.initial_shuffle_triggered().get();
-
-      if !initial_shuffle_triggered {
-        self.initial_shuffle_triggered().set(true);
-      }
-      
-      self.do_shuffle();
-
-      Ok(())
-    }
-
     fn do_shuffle(&self) {
-      let mut vec = self.tokens_left_to_mint();
+        let mut vec = self.tokens_left_to_mint();
 
-      let vec_len = vec.len();
-      let mut rand_source = RandomnessSource::<Self::Api>::new();
+        let vec_len = vec.len();
+        let mut rand_source = RandomnessSource::<Self::Api>::new();
 
-      let index = rand_source.next_usize_in_range(1, vec_len + 1);
+        let index = rand_source.next_usize_in_range(1, vec_len + 1);
 
-      let choosen_item = vec.get(index);
+        let choosen_item = vec.get(index);
 
-      vec.swap_remove(index);
+        vec.swap_remove(index);
 
-      self.next_index_to_mint().set(choosen_item);
-  }
+        self.next_index_to_mint().set(choosen_item);
+    }
 
     #[callback]
     fn issue_callback(&self, #[call_result] result: ManagedAsyncCallResult<TokenIdentifier>) {
@@ -697,4 +719,7 @@ pub trait ElvenTools {
 
     #[storage_mapper("initialShuffleTriggered")]
     fn initial_shuffle_triggered(&self) -> SingleValueMapper<bool>;
+
+    #[storage_mapper("initialIndexesPopulateDone")]
+    fn initial_indexes_populate_done(&self) -> SingleValueMapper<bool>;
 }

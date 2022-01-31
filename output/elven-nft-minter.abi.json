@@ -190,6 +190,18 @@
             "outputs": []
         },
         {
+            "name": "populateIndexes",
+            "onlyOwner": true,
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "amount",
+                    "type": "u32"
+                }
+            ],
+            "outputs": []
+        },
+        {
             "name": "mint",
             "mutability": "mutable",
             "payableInTokens": [
@@ -200,18 +212,6 @@
                     "name": "token_amount",
                     "type": "optional<u32>",
                     "multi_arg": true
-                }
-            ],
-            "outputs": []
-        },
-        {
-            "name": "populateIndexes",
-            "onlyOwner": true,
-            "mutability": "mutable",
-            "inputs": [
-                {
-                    "name": "amount",
-                    "type": "u32"
                 }
             ],
             "outputs": []
