@@ -44,7 +44,7 @@ pub trait ElvenTools {
         self.image_base_cid().set(&image_base_cid);
         self.metadata_base_cid().set(&metadata_base_cid);
         self.amount_of_tokens_total().set(&amount_of_tokens);
-        self.tokens_limit_per_address()
+        self.tokens_limit_per_address_total()
             .set(&tokens_limit_per_address);
         self.provenance_hash()
             .set(&provenance_hash.into_option().unwrap_or_default());
@@ -58,9 +58,6 @@ pub trait ElvenTools {
         );
         let paused = true;
         self.paused().set(&paused);
-
-        let first_index = self.do_shuffle();
-        self.next_index_to_mint().set(&first_index);
 
         Ok(())
     }
@@ -134,8 +131,31 @@ pub trait ElvenTools {
 
     #[only_owner]
     #[endpoint(setDrop)]
-    fn set_drop(&self, amount_of_tokens_per_drop: u32) -> SCResult<()> {
+    fn set_drop(
+        &self,
+        amount_of_tokens_per_drop: u32,
+        #[var_args] tokens_limit_per_address_per_drop: OptionalArg<u32>,
+    ) -> SCResult<()> {
+        let total_tokens_left = self.total_tokens_left().ok().unwrap_or_default();
+
+        require!(
+            amount_of_tokens_per_drop <= total_tokens_left,
+            "The number of tokens per drop can't be higher than the total amount of tokens left!"
+        );
+
+        let tokens_limit = tokens_limit_per_address_per_drop
+            .into_option()
+            .unwrap_or_default();
+        let tokens_limit_total = self.tokens_limit_per_address_total().get();
+
+        require!(tokens_limit <= tokens_limit_total, "The tokens limit per address per drop should be smaller or equal to the total limit of tokens per address!");
+
+        if tokens_limit > 0 {
+            self.tokens_limit_per_address_per_drop().set(tokens_limit);
+        }
+
         self.minted_indexes_by_drop().clear();
+        self.minted_per_address_per_drop().clear();
         self.amount_of_tokens_per_drop()
             .set(&amount_of_tokens_per_drop);
 
@@ -147,7 +167,8 @@ pub trait ElvenTools {
     fn unset_drop(&self) -> SCResult<()> {
         self.amount_of_tokens_per_drop().clear();
         self.minted_indexes_by_drop().clear();
-
+        self.tokens_limit_per_address_per_drop().clear();
+        self.minted_per_address_per_drop().clear();
         Ok(())
     }
 
@@ -183,7 +204,7 @@ pub trait ElvenTools {
     #[only_owner]
     #[endpoint(setNewTokensLimitPerAddress)]
     fn set_new_tokens_limit_per_address(&self, limit: u32) -> SCResult<()> {
-        self.tokens_limit_per_address().set(limit);
+        self.tokens_limit_per_address_total().set(limit);
         Ok(())
     }
 
@@ -203,7 +224,7 @@ pub trait ElvenTools {
 
         require!(
             self.get_current_left_tokens_amount() >= amount_of_tokens,
-            "All tokens have been minted already (totally or per drop)!"
+            "All tokens have been minted already or the amount you want to mint is to much. Check limits! (totally or per drop)!"
         );
 
         for _ in 0..amount_of_tokens {
@@ -229,6 +250,41 @@ pub trait ElvenTools {
         Ok(())
     }
 
+    #[only_owner]
+    #[endpoint(populateIndexes)]
+    fn populate_indexes(&self, amount: u32) -> SCResult<()> {
+        let initial_indexes_populate_done = self.initial_indexes_populate_done();
+
+        require!(
+            !initial_indexes_populate_done.get(),
+            "The indexes are already properly populated!"
+        );
+
+        let amount_of_tokens = self.amount_of_tokens_total().get();
+        let mut v_mapper = self.tokens_left_to_mint();
+        let v_mapper_len = v_mapper.len() as u32;
+        let total_amount = v_mapper_len + amount;
+
+        require!(
+            amount > 0 && total_amount <= amount_of_tokens,
+            "Wrong amount of tokens!"
+        );
+
+        let mut vec: Vec<u32> = Vec::new();
+        let from = v_mapper_len + 1;
+        let to = from + amount - 1;
+        for i in from..=to {
+            vec.push(i);
+        }
+        v_mapper.extend_from_slice(&vec);
+
+        if amount_of_tokens == total_amount {
+            self.initial_indexes_populate_done().set(true);
+        }
+
+        Ok(())
+    }
+
     // Main mint function - takes the payment sum for all tokens to mint.
     #[payable("EGLD")]
     #[endpoint(mint)]
@@ -237,6 +293,14 @@ pub trait ElvenTools {
         #[payment_amount] payment_amount: BigUint,
         #[var_args] token_amount: OptionalArg<u32>,
     ) -> SCResult<()> {
+        require!(
+          self.initial_indexes_populate_done().get(),
+          "The indexes are not properly populated! Double check the deployment process and populateIndexes endpoint calls."
+        );
+        require!(
+            self.initial_shuffle_triggered().get(),
+            "Run the shuffle mechanism at least once!"
+        );
         require!(
             self.paused().is_empty(),
             "The minting is paused or haven't started yet!"
@@ -256,17 +320,17 @@ pub trait ElvenTools {
 
         require!(
             self.get_current_left_tokens_amount() >= tokens,
-            "All tokens have been minted already (totally or per drop)!"
+            "All tokens have been minted already or the amount you want to mint is to much. Check limits! (totally or per drop)!"
         );
 
         let caller = self.blockchain().get_caller();
 
-        let minted_per_address = self.minted_per_address(&caller).get();
-        let tokens_limit_per_address = self.tokens_limit_per_address().get();
+        let minted_per_address = self.minted_per_address_total(&caller).get();
+        let tokens_limit_per_address = self.tokens_limit_per_address_total().get();
 
         let tokens_left_to_mint = tokens_limit_per_address - minted_per_address;
 
-        if (tokens < 1) {
+        if tokens < 1 {
             tokens = 1
         }
 
@@ -274,6 +338,23 @@ pub trait ElvenTools {
             tokens_left_to_mint >= tokens,
             "You can't mint such an amount of tokens. Check the limits by one address!"
         );
+
+        // Check if there is a drop set and the limits per address for the drop are set
+        if !self.tokens_limit_per_address_per_drop().is_empty() {
+            let minted_per_address_per_drop = self
+                .minted_per_address_per_drop()
+                .get(&caller)
+                .unwrap_or_default();
+            let tokens_limit_per_address_per_drop = self.tokens_limit_per_address_per_drop().get();
+
+            let tokens_left_to_mint_per_drop =
+                tokens_limit_per_address_per_drop - minted_per_address_per_drop;
+
+            require!(
+            tokens_left_to_mint_per_drop >= tokens,
+            "You can't mint such an amount of tokens. Check the limits by one address per drop!"
+          );
+        }
 
         let single_payment_amount = payment_amount / tokens;
 
@@ -297,21 +378,23 @@ pub trait ElvenTools {
         payment_amount: BigUint,
         #[var_args] giveaway_address: OptionalArg<ManagedAddress>,
     ) -> SCResult<()> {
+        let next_index_to_mint = self.next_index_to_mint().get();
+
         let amount = &BigUint::from(NFT_AMOUNT);
 
         let token = self.nft_token_id().get();
-        let token_name = self.build_token_name_buffer();
+        let token_name = self.build_token_name_buffer(next_index_to_mint);
 
         let royalties = self.royalties().get();
 
-        let attributes = self.build_attributes_buffer();
+        let attributes = self.build_attributes_buffer(next_index_to_mint);
 
         let attributes_hash = self
             .crypto()
             .sha256_legacy(&attributes.to_boxed_bytes().as_slice());
         let hash_buffer = ManagedBuffer::from(attributes_hash.as_bytes());
 
-        let uris = self.build_uris_vec();
+        let uris = self.build_uris_vec(next_index_to_mint);
 
         let nonce = self.send().esdt_nft_create(
             &token,
@@ -323,9 +406,6 @@ pub trait ElvenTools {
             &uris,
         );
 
-        // Choose next index to mint here (random)
-        self.handle_next_index_setup();
-
         let giveaway_address = giveaway_address
             .into_option()
             .unwrap_or_else(|| ManagedAddress::zero());
@@ -335,7 +415,7 @@ pub trait ElvenTools {
 
         let receiver;
 
-        if (giveaway_address.is_zero()) {
+        if giveaway_address.is_zero() {
             receiver = &caller;
         } else {
             receiver = &giveaway_address;
@@ -349,9 +429,26 @@ pub trait ElvenTools {
             &[],
         );
 
-        self.minted_per_address(&caller).update(|sum| *sum += 1);
+        if payment_amount > 0 {
+            self.minted_per_address_total(&caller)
+                .update(|sum| *sum += 1);
 
-        if (payment_amount > 0) {
+            let tokens_limit_per_address_per_drop = self.tokens_limit_per_address_per_drop().get();
+
+            if tokens_limit_per_address_per_drop > 0 {
+                let existing_address_value = self
+                    .minted_per_address_per_drop()
+                    .get(&caller)
+                    .unwrap_or_default();
+                if existing_address_value > 0 {
+                    let next_value = existing_address_value + 1;
+                    self.minted_per_address_per_drop()
+                        .insert(caller, next_value);
+                } else {
+                    self.minted_per_address_per_drop().insert(caller, 1);
+                }
+            }
+
             let payment_nonce: u64 = 0;
             let payment_token = &TokenIdentifier::egld();
 
@@ -360,15 +457,44 @@ pub trait ElvenTools {
                 .direct(&owner, &payment_token, payment_nonce, &payment_amount, &[]);
         }
 
+        // Choose next index to mint here from shuffled Vec
+        self.handle_next_index_setup(next_index_to_mint);
+
         Ok(())
     }
 
     #[endpoint(shuffle)]
     fn shuffle(&self) -> SCResult<()> {
-        let next_index_to_mint = self.do_shuffle();
-        self.next_index_to_mint().set(next_index_to_mint);
+        let v_mapper = self.tokens_left_to_mint();
+        require!(
+            !v_mapper.is_empty(),
+            "There is nothing to shuffle. Indexes not populated!"
+        );
+
+        let initial_shuffle_triggered = self.initial_shuffle_triggered().get();
+
+        if !initial_shuffle_triggered {
+            self.initial_shuffle_triggered().set(true);
+        }
+
+        self.do_shuffle();
 
         Ok(())
+    }
+
+    fn do_shuffle(&self) {
+        let mut vec = self.tokens_left_to_mint();
+
+        let vec_len = vec.len();
+        let mut rand_source = RandomnessSource::<Self::Api>::new();
+
+        let index = rand_source.next_usize_in_range(1, vec_len + 1);
+
+        let choosen_item = vec.get(index);
+
+        vec.swap_remove(index);
+
+        self.next_index_to_mint().set(choosen_item);
     }
 
     #[callback]
@@ -388,37 +514,31 @@ pub trait ElvenTools {
         }
     }
 
-    fn do_shuffle(&self) -> u32 {
-        let total_tokens_left = self.total_tokens_left().ok().unwrap_or_default();
-
+    fn initial_random_mint_index(&self) -> u32 {
+        let total_tokens = self.amount_of_tokens_total().get();
         let mut rand_source = RandomnessSource::<Self::Api>::new();
-        let mut rand_token_index: u32 = rand_source.next_u32_in_range(1, total_tokens_left);
+        let rand_index = rand_source.next_u32_in_range(1, total_tokens + 1);
 
-        let minted_indexes_mapper = self.minted_indexes_total();
-
-        while minted_indexes_mapper.contains(&rand_token_index) {
-            rand_token_index = rand_source.next_u32_in_range(1, total_tokens_left)
-        }
-
-        rand_token_index
+        rand_index
     }
 
-    fn handle_next_index_setup(&self) {
-        let minted_index = self.next_index_to_mint().get();
-        let drop_amount = self.amount_of_tokens_per_drop().get();
+    fn handle_next_index_setup(&self, minted_index: u32) {
         self.minted_indexes_total().insert(minted_index);
-        if (drop_amount > 0) {
+        let drop_amount = self.amount_of_tokens_per_drop().get();
+        if drop_amount > 0 {
             self.minted_indexes_by_drop().insert(minted_index);
         }
 
-        let next_index = self.do_shuffle();
-        self.next_index_to_mint().set(&next_index);
+        let total_tokens_left = self.total_tokens_left().ok().unwrap_or_default();
+
+        if total_tokens_left > 0 {
+            self.do_shuffle();
+        }
     }
 
-    fn build_uris_vec(&self) -> ManagedVec<ManagedBuffer> {
+    fn build_uris_vec(&self, index_to_mint: u32) -> ManagedVec<ManagedBuffer> {
         use alloc::string::ToString;
 
-        let index_to_mint = self.next_index_to_mint().get();
         let mut uris = ManagedVec::new();
 
         let cid = self.image_base_cid().get();
@@ -445,10 +565,9 @@ pub trait ElvenTools {
     }
 
     // This can be probably optimized with attributes struct, had problems with decoding on the api side
-    fn build_attributes_buffer(&self) -> ManagedBuffer {
+    fn build_attributes_buffer(&self, index_to_mint: u32) -> ManagedBuffer {
         use alloc::string::ToString;
 
-        let index_to_mint = self.next_index_to_mint().get();
         let metadata_key_name = ManagedBuffer::new_from_bytes(METADATA_KEY_NAME);
         let metadata_index_file =
             ManagedBuffer::new_from_bytes(index_to_mint.to_string().as_bytes());
@@ -471,12 +590,11 @@ pub trait ElvenTools {
         attributes
     }
 
-    fn build_token_name_buffer(&self) -> ManagedBuffer {
+    fn build_token_name_buffer(&self, index_to_mint: u32) -> ManagedBuffer {
         use alloc::string::ToString;
 
         let mut full_token_name = ManagedBuffer::new();
         let token_name_from_storage = self.nft_token_name().get();
-        let index_to_mint = self.next_index_to_mint().get();
         let token_index = ManagedBuffer::new_from_bytes(index_to_mint.to_string().as_bytes());
         let hash_sign = ManagedBuffer::new_from_bytes(" #".as_bytes());
 
@@ -491,13 +609,13 @@ pub trait ElvenTools {
         let drop_amount = self.amount_of_tokens_per_drop().get();
         let tokens_left;
         let paused = true;
-        if (drop_amount > 0) {
+        if drop_amount > 0 {
             tokens_left = self.drop_tokens_left().ok().unwrap_or_default();
         } else {
             tokens_left = self.total_tokens_left().ok().unwrap_or_default();
         }
 
-        if (tokens_left <= 0) {
+        if tokens_left <= 0 {
             self.paused().set(&paused);
         }
 
@@ -522,6 +640,16 @@ pub trait ElvenTools {
         Ok(left_tokens)
     }
 
+    #[view(getMintedPerAddressPerDrop)]
+    fn get_minted_per_address_per_drop(&self, address: ManagedAddress) -> SCResult<u32> {
+        let minted_per_address_per_drop = self
+            .minted_per_address_per_drop()
+            .get(&address)
+            .unwrap_or_default();
+
+        Ok(minted_per_address_per_drop)
+    }
+
     #[view(getNftTokenId)]
     #[storage_mapper("nftTokenId")]
     fn nft_token_id(&self) -> SingleValueMapper<TokenIdentifier>;
@@ -538,13 +666,20 @@ pub trait ElvenTools {
     #[storage_mapper("provenanceHash")]
     fn provenance_hash(&self) -> SingleValueMapper<ManagedBuffer>;
 
-    #[view(getTokensLimitPerAddress)]
-    #[storage_mapper("tokensLimitPerAddress")]
-    fn tokens_limit_per_address(&self) -> SingleValueMapper<u32>;
+    #[view(getTokensLimitPerAddressTotal)]
+    #[storage_mapper("tokensLimitPerAddressTotal")]
+    fn tokens_limit_per_address_total(&self) -> SingleValueMapper<u32>;
 
-    #[view(getTokensMintedPerAddress)]
-    #[storage_mapper("mintedPerAddress")]
-    fn minted_per_address(&self, address: &ManagedAddress) -> SingleValueMapper<u32>;
+    #[view(getMintedPerAddressTotal)]
+    #[storage_mapper("mintedPerAddressTotal")]
+    fn minted_per_address_total(&self, address: &ManagedAddress) -> SingleValueMapper<u32>;
+
+    #[view(getTokensLimitPerAddressPerDrop)]
+    #[storage_mapper("tokensLimitPerAddressPerDrop")]
+    fn tokens_limit_per_address_per_drop(&self) -> SingleValueMapper<u32>;
+
+    #[storage_mapper("mintedPerAddressPerDrop")]
+    fn minted_per_address_per_drop(&self) -> MapMapper<ManagedAddress, u32>;
 
     #[storage_mapper("iamgeBaseCid")]
     fn image_base_cid(&self) -> SingleValueMapper<ManagedBuffer>;
@@ -564,9 +699,6 @@ pub trait ElvenTools {
     #[storage_mapper("mintedIndexesByDrop")]
     fn minted_indexes_by_drop(&self) -> SetMapper<u32>;
 
-    #[storage_mapper("nextIndexToMint")]
-    fn next_index_to_mint(&self) -> SingleValueMapper<u32>;
-
     #[storage_mapper("royalties")]
     fn royalties(&self) -> SingleValueMapper<BigUint>;
 
@@ -578,4 +710,16 @@ pub trait ElvenTools {
 
     #[storage_mapper("amountOfTokensPerDrop")]
     fn amount_of_tokens_per_drop(&self) -> SingleValueMapper<u32>;
+
+    #[storage_mapper("nextIndexToMint")]
+    fn next_index_to_mint(&self) -> SingleValueMapper<u32>;
+
+    #[storage_mapper("tokensLeftToMint")]
+    fn tokens_left_to_mint(&self) -> VecMapper<u32>;
+
+    #[storage_mapper("initialShuffleTriggered")]
+    fn initial_shuffle_triggered(&self) -> SingleValueMapper<bool>;
+
+    #[storage_mapper("initialIndexesPopulateDone")]
+    fn initial_indexes_populate_done(&self) -> SingleValueMapper<bool>;
 }

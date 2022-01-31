@@ -9,11 +9,11 @@
         },
         "contractCrate": {
             "name": "elven-nft-minter",
-            "version": "1.0.0"
+            "version": "1.1.0"
         },
         "framework": {
             "name": "elrond-wasm",
-            "version": "0.26.0"
+            "version": "0.27.2"
         }
     },
     "name": "ElvenTools",
@@ -110,6 +110,11 @@
                 {
                     "name": "amount_of_tokens_per_drop",
                     "type": "u32"
+                },
+                {
+                    "name": "tokens_limit_per_address_per_drop",
+                    "type": "optional<u32>",
+                    "multi_arg": true
                 }
             ],
             "outputs": []
@@ -185,6 +190,18 @@
             "outputs": []
         },
         {
+            "name": "populateIndexes",
+            "onlyOwner": true,
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "amount",
+                    "type": "u32"
+                }
+            ],
+            "outputs": []
+        },
+        {
             "name": "mint",
             "mutability": "mutable",
             "payableInTokens": [
@@ -219,6 +236,21 @@
             "name": "getTotalTokensLeft",
             "mutability": "readonly",
             "inputs": [],
+            "outputs": [
+                {
+                    "type": "u32"
+                }
+            ]
+        },
+        {
+            "name": "getMintedPerAddressPerDrop",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "address",
+                    "type": "Address"
+                }
+            ],
             "outputs": [
                 {
                     "type": "u32"
@@ -266,7 +298,7 @@
             ]
         },
         {
-            "name": "getTokensLimitPerAddress",
+            "name": "getTokensLimitPerAddressTotal",
             "mutability": "readonly",
             "inputs": [],
             "outputs": [
@@ -276,7 +308,7 @@
             ]
         },
         {
-            "name": "getTokensMintedPerAddress",
+            "name": "getMintedPerAddressTotal",
             "mutability": "readonly",
             "inputs": [
                 {
@@ -284,6 +316,16 @@
                     "type": "Address"
                 }
             ],
+            "outputs": [
+                {
+                    "type": "u32"
+                }
+            ]
+        },
+        {
+            "name": "getTokensLimitPerAddressPerDrop",
+            "mutability": "readonly",
+            "inputs": [],
             "outputs": [
                 {
                     "type": "u32"

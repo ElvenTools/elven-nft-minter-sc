@@ -39,9 +39,9 @@ checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 
 [[package]]
 name = "elrond-codec"
-version = "0.8.3"
+version = "0.8.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "62c791ac0f5f720ff7b7b8ea4f15aa13c17cdb41c1c8831defa067851d6ecb9b"
+checksum = "580229b80d4160925c0465fd03ad4185273ef73e36abc449beaa7a1e4f7c189c"
 dependencies = [
  "arrayvec",
  "elrond-codec-derive",
@@ -50,9 +50,9 @@ dependencies = [
 
 [[package]]
 name = "elrond-codec-derive"
-version = "0.8.3"
+version = "0.8.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8c8c461ea8e51e1facee8c3f8c84a9339f4307b29a9fad9109ca98e45fcb07b8"
+checksum = "f072318c367ec7602112172f8eaf5f23aba3f17bc4ab62c62138837652b31188"
 dependencies = [
  "hex",
  "proc-macro2",
@@ -62,9 +62,9 @@ dependencies = [
 
 [[package]]
 name = "elrond-wasm"
-version = "0.26.0"
+version = "0.27.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "598913c5925dc4ba337da4e5dbf43c9462b5da391c07b1136a9fa53cdc398d7e"
+checksum = "cae8e03a51c026b88e0c1dc425889b8683bd72b9ede054fa564675e0b9cd1f14"
 dependencies = [
  "bitflags",
  "elrond-codec",
@@ -76,9 +76,9 @@ dependencies = [
 
 [[package]]
 name = "elrond-wasm-derive"
-version = "0.26.0"
+version = "0.27.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4251c0c8d153f0997d37901fcd20b90ca41a3f34ffb0a8887ce37c5f2f2f09ea"
+checksum = "2cf457ba4c4529788c6b72b4924d1c85491f8ae10c496295f8fdac431b940f72"
 dependencies = [
  "hex",
  "proc-macro2",
@@ -89,18 +89,18 @@ dependencies = [
 
 [[package]]
 name = "elrond-wasm-node"
-version = "0.26.0"
+version = "0.27.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4e45c0ba4f27b883d67110451eee01e44ae683c763e70519a7c9331b32528bcd"
+checksum = "8917bedb4c0c42e66a5c6694bb0c4d004160cd5eaed8c218176541b51aa4c7f4"
 dependencies = [
  "elrond-wasm",
 ]
 
 [[package]]
 name = "elrond-wasm-output"
-version = "0.26.0"
+version = "0.27.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "457ae0bb0f00498ccb2a36fa822961f77e6262788672636b87f01bb3c3e111a6"
+checksum = "8d684f9d384e34c38be23005487cf1626d6be8f82f92035e1ae68f0b8aff0470"
 dependencies = [
  "elrond-wasm-node",
  "wee_alloc",
@@ -108,14 +108,14 @@ dependencies = [
 
 [[package]]
 name = "elven-nft-minter"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "elrond-wasm",
 ]
 
 [[package]]
 name = "elven-nft-minter-wasm"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "elrond-wasm-node",
  "elrond-wasm-output",
@@ -130,9 +130,9 @@ checksum = "c34f04666d835ff5d62e058c3995147c06f42fe86ff053337632bca83e42702d"
 
 [[package]]
 name = "getrandom"
-version = "0.2.3"
+version = "0.2.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7fcd999463524c52659517fe2cea98493cfe485d10565e7b0fb07dbba7ad2753"
+checksum = "418d37c8b1d42553c93648be529cb70f920d3baf8ef469b74b9638df426e0b4c"
 dependencies = [
  "cfg-if 1.0.0",
  "libc",
@@ -162,9 +162,9 @@ checksum = "7ebdb29d2ea9ed0083cd8cece49bbd968021bd99b0849edb4a9a7ee0fdf6a4e0"
 
 [[package]]
 name = "libc"
-version = "0.2.112"
+version = "0.2.116"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1b03d17f364a3a042d5e5d46b053bbbf82c92c9430c592dd4c064dc6ee997125"
+checksum = "565dbd88872dbe4cc8a46e527f26483c1d1f7afa6b884a3bd6cd893d4f98da74"
 
 [[package]]
 name = "memory_units"
@@ -195,9 +195,9 @@ dependencies = [
 
 [[package]]
 name = "quote"
-version = "1.0.14"
+version = "1.0.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "47aa80447ce4daf1717500037052af176af5d38cc3e571d9ec1c7353fc10c87d"
+checksum = "864d3e96a899863136fc6e99f3d7cae289dafe43bf2c5ac19b70df7210c0a145"
 dependencies = [
  "proc-macro2",
 ]
@@ -214,9 +214,9 @@ dependencies = [
 
 [[package]]
 name = "syn"
-version = "1.0.85"
+version = "1.0.86"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a684ac3dcd8913827e18cd09a68384ee66c1de24157e3c556c9ab16d85695fb7"
+checksum = "8a65b3f4ffa0092e9887669db0eae07941f023991ab58ea44da8fe8e2d511c6b"
 dependencies = [
  "proc-macro2",
  "quote",
