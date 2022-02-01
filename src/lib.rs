@@ -477,12 +477,12 @@ pub trait ElvenTools {
             self.initial_shuffle_triggered().set(true);
         }
 
-        self.do_shuffle();
+        self.do_shuffle(false);
 
         Ok(())
     }
 
-    fn do_shuffle(&self) {
+    fn do_shuffle(&self, should_swap_remove: bool) {
         let mut vec = self.tokens_left_to_mint();
 
         let vec_len = vec.len();
@@ -492,7 +492,9 @@ pub trait ElvenTools {
 
         let choosen_item = vec.get(index);
 
-        vec.swap_remove(index);
+        if should_swap_remove {
+            vec.swap_remove(index);
+        }
 
         self.next_index_to_mint().set(choosen_item);
     }
@@ -532,7 +534,7 @@ pub trait ElvenTools {
         let total_tokens_left = self.total_tokens_left().ok().unwrap_or_default();
 
         if total_tokens_left > 0 {
-            self.do_shuffle();
+            self.do_shuffle(true);
         }
     }
 
