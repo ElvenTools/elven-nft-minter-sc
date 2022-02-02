@@ -218,6 +218,7 @@
         },
         {
             "name": "shuffle",
+            "onlyOwner": true,
             "mutability": "mutable",
             "inputs": [],
             "outputs": []

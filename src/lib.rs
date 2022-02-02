@@ -463,6 +463,9 @@ pub trait ElvenTools {
         Ok(())
     }
 
+    // TODO: this endpoint should be open for all users, 
+    // but it has to be rewritten, this is temporary fallback fix
+    #[only_owner]
     #[endpoint(shuffle)]
     fn shuffle(&self) -> SCResult<()> {
         let v_mapper = self.tokens_left_to_mint();
@@ -472,12 +475,14 @@ pub trait ElvenTools {
         );
 
         let initial_shuffle_triggered = self.initial_shuffle_triggered().get();
+        require!(
+          !initial_shuffle_triggered,
+          "Initial shuffle already triggered!"
+        );
 
-        if !initial_shuffle_triggered {
-            self.initial_shuffle_triggered().set(true);
-        }
+        self.initial_shuffle_triggered().set(true);
 
-        self.do_shuffle(false);
+        self.do_shuffle(true);
 
         Ok(())
     }
