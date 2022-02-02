@@ -378,23 +378,23 @@ pub trait ElvenTools {
         payment_amount: BigUint,
         #[var_args] giveaway_address: OptionalArg<ManagedAddress>,
     ) -> SCResult<()> {
-        let next_index_to_mint = self.next_index_to_mint().get();
+        let next_index_to_mint_tuple = self.next_index_to_mint().get();
 
         let amount = &BigUint::from(NFT_AMOUNT);
 
         let token = self.nft_token_id().get();
-        let token_name = self.build_token_name_buffer(next_index_to_mint);
+        let token_name = self.build_token_name_buffer(next_index_to_mint_tuple.1);
 
         let royalties = self.royalties().get();
 
-        let attributes = self.build_attributes_buffer(next_index_to_mint);
+        let attributes = self.build_attributes_buffer(next_index_to_mint_tuple.1);
 
         let attributes_hash = self
             .crypto()
             .sha256_legacy(&attributes.to_boxed_bytes().as_slice());
         let hash_buffer = ManagedBuffer::from(attributes_hash.as_bytes());
 
-        let uris = self.build_uris_vec(next_index_to_mint);
+        let uris = self.build_uris_vec(next_index_to_mint_tuple.1);
 
         let nonce = self.send().esdt_nft_create(
             &token,
@@ -458,37 +458,32 @@ pub trait ElvenTools {
         }
 
         // Choose next index to mint here from shuffled Vec
-        self.handle_next_index_setup(next_index_to_mint);
+        self.handle_next_index_setup(next_index_to_mint_tuple);
 
         Ok(())
     }
 
-    // TODO: this endpoint should be open for all users, 
-    // but it has to be rewritten, this is temporary fallback fix
-    #[only_owner]
     #[endpoint(shuffle)]
     fn shuffle(&self) -> SCResult<()> {
         let v_mapper = self.tokens_left_to_mint();
         require!(
             !v_mapper.is_empty(),
-            "There is nothing to shuffle. Indexes not populated!"
+            "There is nothing to shuffle. Indexes not populated or there are no tokens to mint left!"
         );
 
         let initial_shuffle_triggered = self.initial_shuffle_triggered().get();
-        require!(
-          !initial_shuffle_triggered,
-          "Initial shuffle already triggered!"
-        );
 
-        self.initial_shuffle_triggered().set(true);
+        if !initial_shuffle_triggered {
+          self.initial_shuffle_triggered().set(true);
+        }
 
-        self.do_shuffle(true);
+        self.do_shuffle();
 
         Ok(())
     }
 
-    fn do_shuffle(&self, should_swap_remove: bool) {
-        let mut vec = self.tokens_left_to_mint();
+    fn do_shuffle(&self) {
+        let vec = self.tokens_left_to_mint();
 
         let vec_len = vec.len();
         let mut rand_source = RandomnessSource::<Self::Api>::new();
@@ -497,11 +492,7 @@ pub trait ElvenTools {
 
         let choosen_item = vec.get(index);
 
-        if should_swap_remove {
-            vec.swap_remove(index);
-        }
-
-        self.next_index_to_mint().set(choosen_item);
+        self.next_index_to_mint().set((index, choosen_item));
     }
 
     #[callback]
@@ -529,17 +520,19 @@ pub trait ElvenTools {
         rand_index
     }
 
-    fn handle_next_index_setup(&self, minted_index: u32) {
-        self.minted_indexes_total().insert(minted_index);
+    fn handle_next_index_setup(&self, minted_index_tuple: (usize, u32)) {
+        self.minted_indexes_total().insert(minted_index_tuple.1);
         let drop_amount = self.amount_of_tokens_per_drop().get();
         if drop_amount > 0 {
-            self.minted_indexes_by_drop().insert(minted_index);
+            self.minted_indexes_by_drop().insert(minted_index_tuple.1);
         }
 
         let total_tokens_left = self.total_tokens_left().ok().unwrap_or_default();
 
         if total_tokens_left > 0 {
-            self.do_shuffle(true);
+            let mut vec = self.tokens_left_to_mint();
+            vec.swap_remove(minted_index_tuple.0);
+            self.do_shuffle();
         }
     }
 
@@ -719,7 +712,7 @@ pub trait ElvenTools {
     fn amount_of_tokens_per_drop(&self) -> SingleValueMapper<u32>;
 
     #[storage_mapper("nextIndexToMint")]
-    fn next_index_to_mint(&self) -> SingleValueMapper<u32>;
+    fn next_index_to_mint(&self) -> SingleValueMapper<(usize, u32)>;
 
     #[storage_mapper("tokensLeftToMint")]
     fn tokens_left_to_mint(&self) -> VecMapper<u32>;
