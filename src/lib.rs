@@ -214,6 +214,11 @@ pub trait ElvenTools {
     fn giveaway(&self, address: ManagedAddress, amount_of_tokens: u32) -> SCResult<()> {
         require!(!self.nft_token_id().is_empty(), "Token not issued!");
 
+        require!(
+            self.initial_shuffle_triggered().get(),
+            "Run the shuffle mechanism at least once!"
+        );
+
         let token = self.nft_token_id().get();
         let roles = self.blockchain().get_esdt_local_roles(&token);
 
@@ -474,7 +479,7 @@ pub trait ElvenTools {
         let initial_shuffle_triggered = self.initial_shuffle_triggered().get();
 
         if !initial_shuffle_triggered {
-          self.initial_shuffle_triggered().set(true);
+            self.initial_shuffle_triggered().set(true);
         }
 
         self.do_shuffle();
