@@ -1,3 +1,7 @@
+### [1.1.1](https://github.com/juliancwirko/elven-nft-minter-sc/releases/tag/v1.1.1) (2022-02-03)
+- Fixed the problematic bug related to how the public `shuffle` endpoint worked.
+- Fixed the bug related to the `giveaway` and initial `shuffle`
+
 ### [1.1.0](https://github.com/juliancwirko/elven-nft-minter-sc/releases/tag/v1.1.0) (2022-01-28)
 - Added tokens limit per address per drop as an option - each drop will reset the counter. The drop limit is optional. If not set, the general limit will be used. The global limit will be used when the drop is unset, and the address will still mint to the limit. The general limit is always more important than the drop limit. The address won't mint if the general limit is over and the drop limit still allows the mint. Always rethink the logic of the general limit and the drop limit. You will be able to change the general limit at any time if needed.
 - fixed critical bug regarding the shuffling mechanism - it was not optimized enough
