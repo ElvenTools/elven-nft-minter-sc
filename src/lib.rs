@@ -4,8 +4,8 @@ extern crate alloc;
 
 const NFT_AMOUNT: u32 = 1;
 const ROYALTIES_MAX: u32 = 10_000;
+// This is the most popular gateway, but it doesn't matter the most important is IPFS CID
 const IPFS_GATEWAY_HOST: &[u8] = "https://ipfs.io/ipfs/".as_bytes();
-const IPFS_SCHEME: &[u8] = "ipfs://".as_bytes();
 const METADATA_KEY_NAME: &[u8] = "metadata:".as_bytes();
 const METADATA_FILE_EXTENSION: &[u8] = ".json".as_bytes();
 const ATTR_SEPARATOR: &[u8] = ";".as_bytes();
@@ -30,6 +30,7 @@ pub trait ElvenTools {
         #[var_args] file_extension: OptionalArg<ManagedBuffer>,
         #[var_args] tags: OptionalArg<ManagedBuffer>,
         #[var_args] provenance_hash: OptionalArg<ManagedBuffer>,
+        #[var_args] is_metadata_in_uris: OptionalArg<bool>
     ) -> SCResult<()> {
         require!(royalties <= ROYALTIES_MAX, "Royalties cannot exceed 100%!");
         require!(
@@ -56,6 +57,8 @@ pub trait ElvenTools {
                 .into_option()
                 .unwrap_or_else(|| ManagedBuffer::new_from_bytes(DEFAULT_IMG_FILE_EXTENSION)),
         );
+        self.is_metadata_in_uris().set(&is_metadata_in_uris.into_option().unwrap_or_default());
+
         let paused = true;
         self.paused().set(&paused);
 
@@ -124,6 +127,8 @@ pub trait ElvenTools {
     #[only_owner]
     #[endpoint(startMinting)]
     fn start_minting(&self) -> SCResult<()> {
+        require!(!self.nft_token_id().is_empty(), "Token not issued!");
+
         self.paused().clear();
 
         Ok(())
@@ -229,7 +234,7 @@ pub trait ElvenTools {
 
         require!(
             self.get_current_left_tokens_amount() >= amount_of_tokens,
-            "All tokens have been minted already or the amount you want to mint is to much. Check limits! (totally or per drop)!"
+            "All tokens have been minted already or the amount you want to mint is too much. Check limits! (totally or per drop)!"
         );
 
         for _ in 0..amount_of_tokens {
@@ -470,6 +475,7 @@ pub trait ElvenTools {
 
     #[endpoint(shuffle)]
     fn shuffle(&self) -> SCResult<()> {
+        require!(!self.nft_token_id().is_empty(), "Token not issued!");
         let v_mapper = self.tokens_left_to_mint();
         require!(
             !v_mapper.is_empty(),
@@ -544,27 +550,34 @@ pub trait ElvenTools {
     fn build_uris_vec(&self, index_to_mint: u32) -> ManagedVec<ManagedBuffer> {
         use alloc::string::ToString;
 
+        let is_metadata_in_uris = self.is_metadata_in_uris().get();
+
         let mut uris = ManagedVec::new();
 
-        let cid = self.image_base_cid().get();
+        let image_cid = self.image_base_cid().get();
+        let metadata_cid = self.metadata_base_cid().get();
         let uri_slash = ManagedBuffer::new_from_bytes(URI_SLASH);
+        let metadata_file_extension = ManagedBuffer::new_from_bytes(METADATA_FILE_EXTENSION);
         let image_file_extension = self.file_extension().get();
         let file_index = ManagedBuffer::from(index_to_mint.to_string().as_bytes());
 
         let mut img_ipfs_gateway_uri = ManagedBuffer::new_from_bytes(IPFS_GATEWAY_HOST);
-        img_ipfs_gateway_uri.append(&cid);
+        img_ipfs_gateway_uri.append(&image_cid);
         img_ipfs_gateway_uri.append(&uri_slash);
         img_ipfs_gateway_uri.append(&file_index);
         img_ipfs_gateway_uri.append(&image_file_extension);
 
-        let mut img_ipfs_uri = ManagedBuffer::new_from_bytes(IPFS_SCHEME);
-        img_ipfs_uri.append(&cid);
-        img_ipfs_uri.append(&uri_slash);
-        img_ipfs_uri.append(&file_index);
-        img_ipfs_uri.append(&image_file_extension);
-
         uris.push(img_ipfs_gateway_uri);
-        uris.push(img_ipfs_uri);
+
+        if is_metadata_in_uris {
+          let mut ipfs_metadata_uri = ManagedBuffer::new_from_bytes(IPFS_GATEWAY_HOST);
+          ipfs_metadata_uri.append(&metadata_cid);
+          ipfs_metadata_uri.append(&uri_slash);
+          ipfs_metadata_uri.append(&file_index);
+          ipfs_metadata_uri.append(&metadata_file_extension);
+          
+          uris.push(ipfs_metadata_uri);
+        }
 
         uris
     }
@@ -727,4 +740,7 @@ pub trait ElvenTools {
 
     #[storage_mapper("initialIndexesPopulateDone")]
     fn initial_indexes_populate_done(&self) -> SingleValueMapper<bool>;
+
+    #[storage_mapper("isMetadataInUris")]
+    fn is_metadata_in_uris(&self) -> SingleValueMapper<bool>;
 }

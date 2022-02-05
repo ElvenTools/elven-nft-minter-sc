@@ -43,10 +43,11 @@ where
         let tokens_limit_per_address: u32 = 3;
         let royalties = BigUint::from(1000 as u32);
         let selling_price = BigUint::from(1000000000000000000 as u64);
-
         let tags = OptionalArg::Some(ManagedBuffer::<DebugApi>::from(b"tags:tag1,tag2"));
         let provenance_hash = OptionalArg::Some(ManagedBuffer::<DebugApi>::from(b"provenanceHash"));
         let file_extension = OptionalArg::Some(ManagedBuffer::<DebugApi>::from(b".jpg"));
+        let is_metadata_in_uris = OptionalArg::Some(true);
+
         let result = sc.init(
           image_base_cid,
           metadata_base_cid,
@@ -57,6 +58,7 @@ where
           file_extension,
           tags,
           provenance_hash,
+          is_metadata_in_uris,
         );
         assert_eq!(result, SCResult::Ok(()));
         StateChange::Commit
