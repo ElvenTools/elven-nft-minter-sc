@@ -327,6 +327,10 @@ pub trait ElvenTools {
         );
 
         let mut tokens = token_amount.into_option().unwrap_or_default();
+      
+        if tokens < 1 {
+            tokens = 1
+        }
 
         require!(
             self.get_current_left_tokens_amount() >= tokens,
@@ -337,12 +341,7 @@ pub trait ElvenTools {
 
         let minted_per_address = self.minted_per_address_total(&caller).get();
         let tokens_limit_per_address = self.tokens_limit_per_address_total().get();
-
         let tokens_left_to_mint = tokens_limit_per_address - minted_per_address;
-
-        if tokens < 1 {
-            tokens = 1
-        }
 
         require!(
             tokens_left_to_mint >= tokens,
