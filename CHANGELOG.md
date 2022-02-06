@@ -1,5 +1,9 @@
+### [1.3.0](https://github.com/juliancwirko/elven-nft-minter-sc/releases/tag/v1.3.0) (2022-02-06)
+- the `amount_of_tokens` for the `mint` endpoint is now mandatory. It cleans up the code a little bit and makes it less prone to bugs. CLI requires the amount anyway, the same with the `giveaway` endpoint. So it is now unified.
+
 ### [1.2.0](https://github.com/juliancwirko/elven-nft-minter-sc/releases/tag/v1.2.0) (2022-02-04)
 - Metadata JSON file can be now attached also in the Assets/Uris section (some marketplaces require that).
+
 - There will be no `ipfs://` schema-based Uri from the Assets/Uris. It is because there are usually gateway Uris only. It is still possible to add the ipfs schema-based Uri to the metadata JSON file.
 - By default, the CLI tool will use the Smart Contract from a specific compatible version tag, not from the main branch. The version of the Smart Contract will be shown in the package.json file.
 
