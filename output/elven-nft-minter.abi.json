@@ -9,7 +9,7 @@
         },
         "contractCrate": {
             "name": "elven-nft-minter",
-            "version": "1.2.0"
+            "version": "1.3.0"
         },
         "framework": {
             "name": "elrond-wasm",
@@ -214,9 +214,8 @@
             ],
             "inputs": [
                 {
-                    "name": "token_amount",
-                    "type": "optional<u32>",
-                    "multi_arg": true
+                    "name": "amount_of_tokens",
+                    "type": "u32"
                 }
             ],
             "outputs": []

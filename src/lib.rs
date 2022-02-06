@@ -30,7 +30,7 @@ pub trait ElvenTools {
         #[var_args] file_extension: OptionalArg<ManagedBuffer>,
         #[var_args] tags: OptionalArg<ManagedBuffer>,
         #[var_args] provenance_hash: OptionalArg<ManagedBuffer>,
-        #[var_args] is_metadata_in_uris: OptionalArg<bool>
+        #[var_args] is_metadata_in_uris: OptionalArg<bool>,
     ) -> SCResult<()> {
         require!(royalties <= ROYALTIES_MAX, "Royalties cannot exceed 100%!");
         require!(
@@ -57,7 +57,8 @@ pub trait ElvenTools {
                 .into_option()
                 .unwrap_or_else(|| ManagedBuffer::new_from_bytes(DEFAULT_IMG_FILE_EXTENSION)),
         );
-        self.is_metadata_in_uris().set(&is_metadata_in_uris.into_option().unwrap_or_default());
+        self.is_metadata_in_uris()
+            .set(&is_metadata_in_uris.into_option().unwrap_or_default());
 
         let paused = true;
         self.paused().set(&paused);
@@ -301,8 +302,21 @@ pub trait ElvenTools {
     fn mint(
         &self,
         #[payment_amount] payment_amount: BigUint,
-        #[var_args] token_amount: OptionalArg<u32>,
+        amount_of_tokens: u32,
     ) -> SCResult<()> {
+        require!(
+            amount_of_tokens > 0,
+            "The number of tokens provided can't be less than 1!"
+        );
+        require!(!self.nft_token_id().is_empty(), "Token not issued!");
+
+        let token = self.nft_token_id().get();
+        let roles = self.blockchain().get_esdt_local_roles(&token);
+
+        require!(
+            roles.has_role(&EsdtLocalRole::NftCreate),
+            "ESDTNFTCreate role not set!"
+        );
         require!(
           self.initial_indexes_populate_done().get(),
           "The indexes are not properly populated! Double check the deployment process and populateIndexes endpoint calls."
@@ -315,22 +329,10 @@ pub trait ElvenTools {
             self.paused().is_empty(),
             "The minting is paused or haven't started yet!"
         );
-        require!(!self.nft_token_id().is_empty(), "Token not issued!");
-
-        let token = self.nft_token_id().get();
-
-        let roles = self.blockchain().get_esdt_local_roles(&token);
 
         require!(
-            roles.has_role(&EsdtLocalRole::NftCreate),
-            "ESDTNFTCreate role not set!"
-        );
-
-        let mut tokens = token_amount.into_option().unwrap_or_default();
-
-        require!(
-            self.get_current_left_tokens_amount() >= tokens,
-            "All tokens have been minted already or the amount you want to mint is to much. Check limits! (totally or per drop)!"
+            self.get_current_left_tokens_amount() >= amount_of_tokens,
+            "All tokens have been minted already or the amount you want to mint is to much. Check limits (totally or per drop). You have to fit in limits with the whole amount."
         );
 
         let caller = self.blockchain().get_caller();
@@ -340,12 +342,8 @@ pub trait ElvenTools {
 
         let tokens_left_to_mint = tokens_limit_per_address - minted_per_address;
 
-        if tokens < 1 {
-            tokens = 1
-        }
-
         require!(
-            tokens_left_to_mint >= tokens,
+            tokens_left_to_mint >= amount_of_tokens,
             "You can't mint such an amount of tokens. Check the limits by one address!"
         );
 
@@ -361,12 +359,12 @@ pub trait ElvenTools {
                 tokens_limit_per_address_per_drop - minted_per_address_per_drop;
 
             require!(
-            tokens_left_to_mint_per_drop >= tokens,
-            "You can't mint such an amount of tokens. Check the limits by one address per drop!"
-          );
+              tokens_left_to_mint_per_drop >= amount_of_tokens,
+              "You can't mint such an amount of tokens. Check the limits by one address! You have to fit in limits with the whole amount."
+            );
         }
 
-        let single_payment_amount = payment_amount / tokens;
+        let single_payment_amount = payment_amount / amount_of_tokens;
 
         let price_tag = self.selling_price().get();
         require!(
@@ -374,7 +372,7 @@ pub trait ElvenTools {
             "Invalid amount as payment"
         );
 
-        for _ in 0..tokens {
+        for _ in 0..amount_of_tokens {
             self.mint_single_nft(single_payment_amount.clone(), OptionalArg::None)
                 .unwrap();
         }
@@ -570,13 +568,13 @@ pub trait ElvenTools {
         uris.push(img_ipfs_gateway_uri);
 
         if is_metadata_in_uris {
-          let mut ipfs_metadata_uri = ManagedBuffer::new_from_bytes(IPFS_GATEWAY_HOST);
-          ipfs_metadata_uri.append(&metadata_cid);
-          ipfs_metadata_uri.append(&uri_slash);
-          ipfs_metadata_uri.append(&file_index);
-          ipfs_metadata_uri.append(&metadata_file_extension);
-          
-          uris.push(ipfs_metadata_uri);
+            let mut ipfs_metadata_uri = ManagedBuffer::new_from_bytes(IPFS_GATEWAY_HOST);
+            ipfs_metadata_uri.append(&metadata_cid);
+            ipfs_metadata_uri.append(&uri_slash);
+            ipfs_metadata_uri.append(&file_index);
+            ipfs_metadata_uri.append(&metadata_file_extension);
+
+            uris.push(ipfs_metadata_uri);
         }
 
         uris
