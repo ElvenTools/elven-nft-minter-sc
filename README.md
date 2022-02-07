@@ -44,6 +44,10 @@ You can always clone it and change it as you need. The best is to use the Elven 
 - [Telegram](https://t.me/juliancwirko)
 - [Twitter](https://twitter.com/JulianCwirko)
 
+### You my also like
+
+- [NFT Art Maker](https://github.com/juliancwirko/nft-art-maker) - generates images and metadata files and packs them into CAR files, all from provided PNG layers.
+
 ### Issues and ideas
 
 Please post issues and ideas [here](https://github.com/juliancwirko/elven-nft-minter-sc/issues).
