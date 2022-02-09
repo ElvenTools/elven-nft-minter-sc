@@ -1,3 +1,6 @@
+### [1.3.1](https://github.com/juliancwirko/elven-nft-minter-sc/releases/tag/v1.3.0) (2022-02-09)
+- Fixed the bug related to not optimal usage of storage clearing functions for managing the 'drops'.
+
 ### [1.3.0](https://github.com/juliancwirko/elven-nft-minter-sc/releases/tag/v1.3.0) (2022-02-06)
 - the `amount_of_tokens` for the `mint` endpoint is now mandatory. It cleans up the code a little bit and makes it less prone to bugs. CLI requires the amount anyway, the same with the `giveaway` endpoint. So it is now unified.
 
