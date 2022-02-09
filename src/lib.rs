@@ -157,24 +157,31 @@ pub trait ElvenTools {
         require!(tokens_limit <= tokens_limit_total, "The tokens limit per address per drop should be smaller or equal to the total limit of tokens per address!");
 
         if tokens_limit > 0 {
-            self.tokens_limit_per_address_per_drop().set(tokens_limit);
+          self.tokens_limit_per_address_per_drop().set(tokens_limit);
+        } else {
+          self.tokens_limit_per_address_per_drop().set(amount_of_tokens_per_drop);
         }
 
         self.minted_indexes_by_drop().clear();
-        self.minted_per_address_per_drop().clear();
         self.amount_of_tokens_per_drop()
             .set(&amount_of_tokens_per_drop);
 
+        if self.opened_drop().is_empty() {
+          self.opened_drop().set(1);
+        } else {
+          self.opened_drop().update(|sum| *sum += 1);
+        }
+        
         Ok(())
     }
 
     #[only_owner]
     #[endpoint(unsetDrop)]
     fn unset_drop(&self) -> SCResult<()> {
-        self.amount_of_tokens_per_drop().clear();
         self.minted_indexes_by_drop().clear();
+        self.amount_of_tokens_per_drop().clear();
         self.tokens_limit_per_address_per_drop().clear();
-        self.minted_per_address_per_drop().clear();
+        self.opened_drop().clear();
         Ok(())
     }
 
@@ -195,9 +202,8 @@ pub trait ElvenTools {
         image_base_cid: ManagedBuffer,
         metadata_base_cid: ManagedBuffer,
     ) -> SCResult<()> {
-        let minted_tokens = self.minted_indexes_total().len();
         require!(
-            minted_tokens == 0,
+            self.minted_indexes_total().is_empty(),
             "You can't change the CIDs. There are some tokens minted already!"
         );
 
@@ -348,9 +354,10 @@ pub trait ElvenTools {
         );
 
         // Check if there is a drop set and the limits per address for the drop are set
-        if !self.tokens_limit_per_address_per_drop().is_empty() {
+        if !self.opened_drop().is_empty() {
+            let opened_drop_id = self.opened_drop().get();
             let minted_per_address_per_drop = self
-                .minted_per_address_per_drop()
+                .minted_per_address_per_drop(opened_drop_id)
                 .get(&caller)
                 .unwrap_or_default();
             let tokens_limit_per_address_per_drop = self.tokens_limit_per_address_per_drop().get();
@@ -441,19 +448,18 @@ pub trait ElvenTools {
             self.minted_per_address_total(&caller)
                 .update(|sum| *sum += 1);
 
-            let tokens_limit_per_address_per_drop = self.tokens_limit_per_address_per_drop().get();
-
-            if tokens_limit_per_address_per_drop > 0 {
+            if !self.opened_drop().is_empty() {
+                let opened_drop_id = self.opened_drop().get();
                 let existing_address_value = self
-                    .minted_per_address_per_drop()
+                    .minted_per_address_per_drop(opened_drop_id)
                     .get(&caller)
                     .unwrap_or_default();
                 if existing_address_value > 0 {
                     let next_value = existing_address_value + 1;
-                    self.minted_per_address_per_drop()
+                    self.minted_per_address_per_drop(opened_drop_id)
                         .insert(caller, next_value);
                 } else {
-                    self.minted_per_address_per_drop().insert(caller, 1);
+                    self.minted_per_address_per_drop(opened_drop_id).insert(caller, 1);
                 }
             }
 
@@ -530,10 +536,21 @@ pub trait ElvenTools {
     }
 
     fn handle_next_index_setup(&self, minted_index_tuple: (usize, u32)) {
-        self.minted_indexes_total().insert(minted_index_tuple.1);
+        let is_minted_indexes_total_empty = self.minted_indexes_total().is_empty();
+        if is_minted_indexes_total_empty {
+          self.minted_indexes_total().set(1);
+        } else {
+          self.minted_indexes_total().update(|sum| *sum += 1);
+        }
+        
         let drop_amount = self.amount_of_tokens_per_drop().get();
         if drop_amount > 0 {
-            self.minted_indexes_by_drop().insert(minted_index_tuple.1);
+            let is_minted_indexes_by_drop_empty = self.minted_indexes_by_drop().is_empty();
+            if is_minted_indexes_by_drop_empty {
+              self.minted_indexes_by_drop().set(1);
+            } else {
+              self.minted_indexes_by_drop().update(|sum| *sum += 1);
+            }
         }
 
         let total_tokens_left = self.total_tokens_left().ok().unwrap_or_default();
@@ -640,7 +657,7 @@ pub trait ElvenTools {
 
     #[view(getDropTokensLeft)]
     fn drop_tokens_left(&self) -> SCResult<u32> {
-        let minted_tokens = self.minted_indexes_by_drop().len();
+        let minted_tokens = self.minted_indexes_by_drop().get();
         let amount_of_tokens = self.amount_of_tokens_per_drop().get();
         let left_tokens: u32 = amount_of_tokens - minted_tokens as u32;
 
@@ -649,7 +666,7 @@ pub trait ElvenTools {
 
     #[view(getTotalTokensLeft)]
     fn total_tokens_left(&self) -> SCResult<u32> {
-        let minted_tokens = self.minted_indexes_total().len();
+        let minted_tokens = self.minted_indexes_total().get();
         let amount_of_tokens = self.amount_of_tokens_total().get();
         let left_tokens: u32 = amount_of_tokens - minted_tokens as u32;
 
@@ -658,10 +675,16 @@ pub trait ElvenTools {
 
     #[view(getMintedPerAddressPerDrop)]
     fn get_minted_per_address_per_drop(&self, address: ManagedAddress) -> SCResult<u32> {
-        let minted_per_address_per_drop = self
-            .minted_per_address_per_drop()
-            .get(&address)
-            .unwrap_or_default();
+        let minted_per_address_per_drop: u32;
+        if !self.opened_drop().is_empty() {
+          let opened_drop_id = self.opened_drop().get();
+          minted_per_address_per_drop = self
+          .minted_per_address_per_drop(opened_drop_id)
+          .get(&address)
+          .unwrap_or_default();
+        } else {
+          minted_per_address_per_drop = 0;
+        }
 
         Ok(minted_per_address_per_drop)
     }
@@ -695,7 +718,10 @@ pub trait ElvenTools {
     fn tokens_limit_per_address_per_drop(&self) -> SingleValueMapper<u32>;
 
     #[storage_mapper("mintedPerAddressPerDrop")]
-    fn minted_per_address_per_drop(&self) -> MapMapper<ManagedAddress, u32>;
+    fn minted_per_address_per_drop(&self, id: u16) -> MapMapper<ManagedAddress, u32>;
+
+    #[storage_mapper("openedDrop")]
+    fn opened_drop(&self) -> SingleValueMapper<u16>;
 
     #[storage_mapper("iamgeBaseCid")]
     fn image_base_cid(&self) -> SingleValueMapper<ManagedBuffer>;
@@ -710,10 +736,10 @@ pub trait ElvenTools {
     fn amount_of_tokens_total(&self) -> SingleValueMapper<u32>;
 
     #[storage_mapper("mintedIndexesTotal")]
-    fn minted_indexes_total(&self) -> SetMapper<u32>;
+    fn minted_indexes_total(&self) -> SingleValueMapper<u32>;
 
     #[storage_mapper("mintedIndexesByDrop")]
-    fn minted_indexes_by_drop(&self) -> SetMapper<u32>;
+    fn minted_indexes_by_drop(&self) -> SingleValueMapper<u32>;
 
     #[storage_mapper("royalties")]
     fn royalties(&self) -> SingleValueMapper<BigUint>;
