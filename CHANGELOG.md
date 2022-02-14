@@ -1,4 +1,4 @@
-### [1.4.1](https://github.com/juliancwirko/elven-tools-cli/releases/tag/v1.4.1) (2022-02-14)
+### [1.4.1](https://github.com/juliancwirko/elven-nft-minter-sc/releases/tag/v1.4.1) (2022-02-14)
 - fix populate indexes after changes in the Elrond's architecture, check out: [#34](https://github.com/juliancwirko/elven-nft-minter-sc/issues/34) for more details. It results in more transactions that have to be done. But for now, it is necessary.
 
 ### [1.4.0](https://github.com/juliancwirko/elven-nft-minter-sc/releases/tag/v1.4.0) (2022-02-13)
