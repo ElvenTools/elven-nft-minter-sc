@@ -288,13 +288,11 @@ pub trait ElvenTools {
             "Wrong amount of tokens!"
         );
 
-        let mut vec: Vec<u32> = Vec::new();
         let from = v_mapper_len + 1;
         let to = from + amount - 1;
         for i in from..=to {
-            vec.push(i);
+            v_mapper.push(&i);
         }
-        v_mapper.extend_from_slice(&vec);
 
         if amount_of_tokens == total_amount {
             self.initial_indexes_populate_done().set(true);

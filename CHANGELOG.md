@@ -1,4 +1,7 @@
-### [1.4.0](https://github.com/juliancwirko/elven-nft-minter-sc/releases/tag/v1.4.0) (2022-02-11)
+### [1.4.1](https://github.com/juliancwirko/elven-tools-cli/releases/tag/v1.4.1) (2022-02-14)
+- fix populate indexes after changes in the Elrond's architecture, check out: [#34](https://github.com/juliancwirko/elven-nft-minter-sc/issues/34) for more details. It results in more transactions that have to be done. But for now, it is necessary.
+
+### [1.4.0](https://github.com/juliancwirko/elven-nft-minter-sc/releases/tag/v1.4.0) (2022-02-13)
 - allowlist functionality - when you enable it, only eligible addresses from the list can mint. You can add more addresses at any time. The amount of tokens per address is the same as usual. You can always change that per drop.
 - replace all storage `set` to `set_if_empty` - preparation for the upgrade tests and CLI tooling 
 
