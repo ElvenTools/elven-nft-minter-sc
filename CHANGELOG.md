@@ -1,3 +1,7 @@
+### [1.4.0](https://github.com/juliancwirko/elven-nft-minter-sc/releases/tag/v1.4.0) (2022-02-11)
+- allowlist functionality - when you enable it, only eligible addresses from the list can mint. You can add more addresses at any time. The amount of tokens per address is the same as usual. You can always change that per drop.
+- replace all storage `set` to `set_if_empty` - preparation for the upgrade tests and CLI tooling 
+
 ### [1.3.1](https://github.com/juliancwirko/elven-nft-minter-sc/releases/tag/v1.3.0) (2022-02-09)
 - Fixed the bug related to not optimal usage of storage clearing functions for managing the 'drops'.
 

@@ -10,6 +10,10 @@ elrond_wasm_node::wasm_endpoints! {
         callBack
         changeBaseCids
         claimScFunds
+        disableAllowlist
+        enableAllowlist
+        getAllowlistAddressCheck
+        getAllowlistSize
         getDropTokensLeft
         getMintedPerAddressPerDrop
         getMintedPerAddressTotal
@@ -21,9 +25,11 @@ elrond_wasm_node::wasm_endpoints! {
         getTokensLimitPerAddressTotal
         getTotalTokensLeft
         giveaway
+        isAllowlistEnabled
         issueToken
         mint
         pauseMinting
+        populateAllowlist
         populateIndexes
         setDrop
         setLocalRoles

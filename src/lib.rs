@@ -42,26 +42,26 @@ pub trait ElvenTools {
             "Tokens limit per address should be at least 1!"
         );
 
-        self.image_base_cid().set(&image_base_cid);
-        self.metadata_base_cid().set(&metadata_base_cid);
-        self.amount_of_tokens_total().set(&amount_of_tokens);
+        self.image_base_cid().set_if_empty(&image_base_cid);
+        self.metadata_base_cid().set_if_empty(&metadata_base_cid);
+        self.amount_of_tokens_total().set_if_empty(&amount_of_tokens);
         self.tokens_limit_per_address_total()
-            .set(&tokens_limit_per_address);
+            .set_if_empty(&tokens_limit_per_address);
         self.provenance_hash()
-            .set(&provenance_hash.into_option().unwrap_or_default());
-        self.royalties().set(&royalties);
-        self.selling_price().set(&selling_price);
-        self.tags().set(&tags.into_option().unwrap_or_default());
-        self.file_extension().set(
+            .set_if_empty(&provenance_hash.into_option().unwrap_or_default());
+        self.royalties().set_if_empty(&royalties);
+        self.selling_price().set_if_empty(&selling_price);
+        self.tags().set_if_empty(&tags.into_option().unwrap_or_default());
+        self.file_extension().set_if_empty(
             &file_extension
                 .into_option()
                 .unwrap_or_else(|| ManagedBuffer::new_from_bytes(DEFAULT_IMG_FILE_EXTENSION)),
         );
         self.is_metadata_in_uris()
-            .set(&is_metadata_in_uris.into_option().unwrap_or_default());
+            .set_if_empty(&is_metadata_in_uris.into_option().unwrap_or_default());
 
         let paused = true;
-        self.paused().set(&paused);
+        self.paused().set_if_empty(&paused);
 
         Ok(())
     }
@@ -157,9 +157,10 @@ pub trait ElvenTools {
         require!(tokens_limit <= tokens_limit_total, "The tokens limit per address per drop should be smaller or equal to the total limit of tokens per address!");
 
         if tokens_limit > 0 {
-          self.tokens_limit_per_address_per_drop().set(tokens_limit);
+            self.tokens_limit_per_address_per_drop().set(tokens_limit);
         } else {
-          self.tokens_limit_per_address_per_drop().set(amount_of_tokens_per_drop);
+            self.tokens_limit_per_address_per_drop()
+                .set(amount_of_tokens_per_drop);
         }
 
         self.minted_indexes_by_drop().clear();
@@ -167,11 +168,11 @@ pub trait ElvenTools {
             .set(&amount_of_tokens_per_drop);
 
         if self.opened_drop().is_empty() {
-          self.opened_drop().set(1);
+            self.opened_drop().set(1);
         } else {
-          self.opened_drop().update(|sum| *sum += 1);
+            self.opened_drop().update(|sum| *sum += 1);
         }
-        
+
         Ok(())
     }
 
@@ -302,6 +303,30 @@ pub trait ElvenTools {
         Ok(())
     }
 
+    #[only_owner]
+    #[endpoint(enableAllowlist)]
+    fn enable_allowlist(&self) -> SCResult<()> {
+      self.is_allowlist_enabled().set(true);
+
+      Ok(())
+    }
+
+    #[only_owner]
+    #[endpoint(disableAllowlist)]
+    fn disable_allowlist(&self) -> SCResult<()> {
+      self.is_allowlist_enabled().set(false);
+
+      Ok(())
+    }
+
+    #[only_owner]
+    #[endpoint(populateAllowlist)]
+    fn populate_allowlist(&self, addresses: ManagedVec<ManagedAddress>) -> SCResult<()> {
+      self.allowlist().extend(&addresses);
+
+      Ok(())
+    }
+
     // Main mint function - takes the payment sum for all tokens to mint.
     #[payable("EGLD")]
     #[endpoint(mint)]
@@ -310,6 +335,13 @@ pub trait ElvenTools {
         #[payment_amount] payment_amount: BigUint,
         amount_of_tokens: u32,
     ) -> SCResult<()> {
+        let caller = self.blockchain().get_caller();
+
+        let is_allowlist_enabled = self.is_allowlist_enabled().get();
+        if is_allowlist_enabled {
+          require!(self.allowlist().contains(&caller), "The allowlist is enabled. Only eligible addresses can mint!");
+        }
+        
         require!(
             amount_of_tokens > 0,
             "The number of tokens provided can't be less than 1!"
@@ -340,8 +372,6 @@ pub trait ElvenTools {
             self.get_current_left_tokens_amount() >= amount_of_tokens,
             "All tokens have been minted already or the amount you want to mint is to much. Check limits (totally or per drop). You have to fit in limits with the whole amount."
         );
-
-        let caller = self.blockchain().get_caller();
 
         let minted_per_address = self.minted_per_address_total(&caller).get();
         let tokens_limit_per_address = self.tokens_limit_per_address_total().get();
@@ -425,7 +455,6 @@ pub trait ElvenTools {
             .into_option()
             .unwrap_or_else(|| ManagedAddress::zero());
 
-        let nft_token_id = self.nft_token_id().get();
         let caller = self.blockchain().get_caller();
 
         let receiver;
@@ -438,7 +467,7 @@ pub trait ElvenTools {
 
         self.send().direct(
             &receiver,
-            &nft_token_id,
+            &token,
             nonce,
             &BigUint::from(NFT_AMOUNT),
             &[],
@@ -459,7 +488,8 @@ pub trait ElvenTools {
                     self.minted_per_address_per_drop(opened_drop_id)
                         .insert(caller, next_value);
                 } else {
-                    self.minted_per_address_per_drop(opened_drop_id).insert(caller, 1);
+                    self.minted_per_address_per_drop(opened_drop_id)
+                        .insert(caller, 1);
                 }
             }
 
@@ -538,18 +568,18 @@ pub trait ElvenTools {
     fn handle_next_index_setup(&self, minted_index_tuple: (usize, u32)) {
         let is_minted_indexes_total_empty = self.minted_indexes_total().is_empty();
         if is_minted_indexes_total_empty {
-          self.minted_indexes_total().set(1);
+            self.minted_indexes_total().set(1);
         } else {
-          self.minted_indexes_total().update(|sum| *sum += 1);
+            self.minted_indexes_total().update(|sum| *sum += 1);
         }
-        
+
         let drop_amount = self.amount_of_tokens_per_drop().get();
         if drop_amount > 0 {
             let is_minted_indexes_by_drop_empty = self.minted_indexes_by_drop().is_empty();
             if is_minted_indexes_by_drop_empty {
-              self.minted_indexes_by_drop().set(1);
+                self.minted_indexes_by_drop().set(1);
             } else {
-              self.minted_indexes_by_drop().update(|sum| *sum += 1);
+                self.minted_indexes_by_drop().update(|sum| *sum += 1);
             }
         }
 
@@ -677,16 +707,26 @@ pub trait ElvenTools {
     fn get_minted_per_address_per_drop(&self, address: ManagedAddress) -> SCResult<u32> {
         let minted_per_address_per_drop: u32;
         if !self.opened_drop().is_empty() {
-          let opened_drop_id = self.opened_drop().get();
-          minted_per_address_per_drop = self
-          .minted_per_address_per_drop(opened_drop_id)
-          .get(&address)
-          .unwrap_or_default();
+            let opened_drop_id = self.opened_drop().get();
+            minted_per_address_per_drop = self
+                .minted_per_address_per_drop(opened_drop_id)
+                .get(&address)
+                .unwrap_or_default();
         } else {
-          minted_per_address_per_drop = 0;
+            minted_per_address_per_drop = 0;
         }
 
         Ok(minted_per_address_per_drop)
+    }
+
+    #[view(getAllowlistAddressCheck)]
+    fn allowlist_address_check(&self, address: ManagedAddress) -> SCResult<bool> {
+        Ok(self.allowlist().contains(&address))
+    }
+
+    #[view(getAllowlistSize)]
+    fn allowlist_size(&self) -> SCResult<usize> {
+        Ok(self.allowlist().len())
     }
 
     #[view(getNftTokenId)]
@@ -716,6 +756,13 @@ pub trait ElvenTools {
     #[view(getTokensLimitPerAddressPerDrop)]
     #[storage_mapper("tokensLimitPerAddressPerDrop")]
     fn tokens_limit_per_address_per_drop(&self) -> SingleValueMapper<u32>;
+
+    #[view(isAllowlistEnabled)]
+    #[storage_mapper("isAllowlistEnabled")]
+    fn is_allowlist_enabled(&self) -> SingleValueMapper<bool>;
+
+    #[storage_mapper("allowlist")]
+    fn allowlist(&self) -> SetMapper<ManagedAddress>;
 
     #[storage_mapper("mintedPerAddressPerDrop")]
     fn minted_per_address_per_drop(&self, id: u16) -> MapMapper<ManagedAddress, u32>;
