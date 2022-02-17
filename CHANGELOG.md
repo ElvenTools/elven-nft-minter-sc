@@ -1,5 +1,5 @@
 ### [1.4.2](https://github.com/juliancwirko/elven-nft-minter-sc/releases/tag/v1.4.2) (2022-02-17)
-- fixed bug related to the main limit per address per collection - u32 underflow in one edgy case
+- fixed bug related to the limits per address - u32 underflow in one case
 
 ### [1.4.1](https://github.com/juliancwirko/elven-nft-minter-sc/releases/tag/v1.4.1) (2022-02-14)
 - fix populate indexes after changes in the Elrond's architecture, check out: [#34](https://github.com/juliancwirko/elven-nft-minter-sc/issues/34) for more details. It results in more transactions that have to be done. But for now, it is necessary.
