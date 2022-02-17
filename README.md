@@ -2,7 +2,7 @@
 
 - Docs: [www.elven.tools](https://www.elven.tools)
 - Quick jumpstart: [www.elven.tools/docs/jump-start.html](https://www.elven.tools/docs/jump-start.html)
-- Intro video: [youtu.be/szkNE_qOy6Q](https://youtu.be/szkNE_qOy6Q)
+- Intro video: [https://youtu.be/resGP6a7_34](https://youtu.be/resGP6a7_34)
 
 🚨 Not enough tests! As for the mainnet, use it at your own risk! 🚨
 
