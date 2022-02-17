@@ -9,7 +9,7 @@
         },
         "contractCrate": {
             "name": "elven-nft-minter",
-            "version": "1.4.1"
+            "version": "1.4.2"
         },
         "framework": {
             "name": "elrond-wasm",
