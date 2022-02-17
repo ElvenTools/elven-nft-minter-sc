@@ -44,14 +44,16 @@ pub trait ElvenTools {
 
         self.image_base_cid().set_if_empty(&image_base_cid);
         self.metadata_base_cid().set_if_empty(&metadata_base_cid);
-        self.amount_of_tokens_total().set_if_empty(&amount_of_tokens);
+        self.amount_of_tokens_total()
+            .set_if_empty(&amount_of_tokens);
         self.tokens_limit_per_address_total()
             .set_if_empty(&tokens_limit_per_address);
         self.provenance_hash()
             .set_if_empty(&provenance_hash.into_option().unwrap_or_default());
         self.royalties().set_if_empty(&royalties);
         self.selling_price().set_if_empty(&selling_price);
-        self.tags().set_if_empty(&tags.into_option().unwrap_or_default());
+        self.tags()
+            .set_if_empty(&tags.into_option().unwrap_or_default());
         self.file_extension().set_if_empty(
             &file_extension
                 .into_option()
@@ -304,25 +306,25 @@ pub trait ElvenTools {
     #[only_owner]
     #[endpoint(enableAllowlist)]
     fn enable_allowlist(&self) -> SCResult<()> {
-      self.is_allowlist_enabled().set(true);
+        self.is_allowlist_enabled().set(true);
 
-      Ok(())
+        Ok(())
     }
 
     #[only_owner]
     #[endpoint(disableAllowlist)]
     fn disable_allowlist(&self) -> SCResult<()> {
-      self.is_allowlist_enabled().set(false);
+        self.is_allowlist_enabled().set(false);
 
-      Ok(())
+        Ok(())
     }
 
     #[only_owner]
     #[endpoint(populateAllowlist)]
     fn populate_allowlist(&self, addresses: ManagedVec<ManagedAddress>) -> SCResult<()> {
-      self.allowlist().extend(&addresses);
+        self.allowlist().extend(&addresses);
 
-      Ok(())
+        Ok(())
     }
 
     // Main mint function - takes the payment sum for all tokens to mint.
@@ -337,9 +339,12 @@ pub trait ElvenTools {
 
         let is_allowlist_enabled = self.is_allowlist_enabled().get();
         if is_allowlist_enabled {
-          require!(self.allowlist().contains(&caller), "The allowlist is enabled. Only eligible addresses can mint!");
+            require!(
+                self.allowlist().contains(&caller),
+                "The allowlist is enabled. Only eligible addresses can mint!"
+            );
         }
-        
+
         require!(
             amount_of_tokens > 0,
             "The number of tokens provided can't be less than 1!"
@@ -374,10 +379,16 @@ pub trait ElvenTools {
         let minted_per_address = self.minted_per_address_total(&caller).get();
         let tokens_limit_per_address = self.tokens_limit_per_address_total().get();
 
-        let tokens_left_to_mint = tokens_limit_per_address - minted_per_address;
+        let tokens_left_to_mint: u32;
+
+        if tokens_limit_per_address < minted_per_address {
+            tokens_left_to_mint = 0;
+        } else {
+            tokens_left_to_mint = tokens_limit_per_address - minted_per_address;
+        }
 
         require!(
-            tokens_left_to_mint >= amount_of_tokens,
+            tokens_left_to_mint > 0 && tokens_left_to_mint >= amount_of_tokens,
             "You can't mint such an amount of tokens. Check the limits by one address!"
         );
 
@@ -390,11 +401,17 @@ pub trait ElvenTools {
                 .unwrap_or_default();
             let tokens_limit_per_address_per_drop = self.tokens_limit_per_address_per_drop().get();
 
-            let tokens_left_to_mint_per_drop =
-                tokens_limit_per_address_per_drop - minted_per_address_per_drop;
+            let tokens_left_to_mint_per_drop;
+
+            if tokens_limit_per_address_per_drop < minted_per_address_per_drop {
+                tokens_left_to_mint_per_drop = 0;
+            } else {
+                tokens_left_to_mint_per_drop =
+                    tokens_limit_per_address_per_drop - minted_per_address_per_drop;
+            }
 
             require!(
-              tokens_left_to_mint_per_drop >= amount_of_tokens,
+              tokens_left_to_mint_per_drop > 0 && tokens_left_to_mint_per_drop >= amount_of_tokens,
               "You can't mint such an amount of tokens. Check the limits by one address! You have to fit in limits with the whole amount."
             );
         }
@@ -463,13 +480,8 @@ pub trait ElvenTools {
             receiver = &giveaway_address;
         }
 
-        self.send().direct(
-            &receiver,
-            &token,
-            nonce,
-            &BigUint::from(NFT_AMOUNT),
-            &[],
-        );
+        self.send()
+            .direct(&receiver, &token, nonce, &BigUint::from(NFT_AMOUNT), &[]);
 
         if payment_amount > 0 {
             self.minted_per_address_total(&caller)
@@ -676,7 +688,7 @@ pub trait ElvenTools {
             tokens_left = self.total_tokens_left().ok().unwrap_or_default();
         }
 
-        if tokens_left <= 0 {
+        if tokens_left == 0 {
             self.paused().set(&paused);
         }
 
