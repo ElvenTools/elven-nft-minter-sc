@@ -1,3 +1,10 @@
+### [1.5.0](https://github.com/juliancwirko/elven-nft-minter-sc/releases/tag/v1.5.0) (2022-02-25)
+- important performance fixes provided by Dorin (Elrond core dev)
+- upgraded to 0.28.0
+- rewrite the URL creation to use static array instead of to_string
+- removed SCResult (no longer needed, require stops execution immediately)
+- using static buffers for hashing instead of the default legacy implementation (which uses dynamic allocation)
+
 ### [1.4.2](https://github.com/juliancwirko/elven-nft-minter-sc/releases/tag/v1.4.2) (2022-02-17)
 - fixed bug related to the limits per address - u32 underflow in one case
 
