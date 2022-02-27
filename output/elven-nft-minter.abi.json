@@ -9,7 +9,7 @@
         },
         "contractCrate": {
             "name": "elven-nft-minter",
-            "version": "1.5.0"
+            "version": "1.5.1"
         },
         "framework": {
             "name": "elrond-wasm",
@@ -389,6 +389,16 @@
         },
         {
             "name": "isAllowlistEnabled",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "bool"
+                }
+            ]
+        },
+        {
+            "name": "isDropActive",
             "mutability": "readonly",
             "inputs": [],
             "outputs": [

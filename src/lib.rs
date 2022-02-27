@@ -171,11 +171,13 @@ pub trait ElvenTools {
         self.amount_of_tokens_per_drop()
             .set(&amount_of_tokens_per_drop);
 
-        if self.opened_drop().is_empty() {
-            self.opened_drop().set(1);
+        if self.last_drop().is_empty() {
+            self.last_drop().set(1);
         } else {
-            self.opened_drop().update(|sum| *sum += 1);
+            self.last_drop().update(|sum| *sum += 1);
         }
+
+        self.is_drop_active().set(true);
     }
 
     #[only_owner]
@@ -184,7 +186,7 @@ pub trait ElvenTools {
         self.minted_indexes_by_drop().clear();
         self.amount_of_tokens_per_drop().clear();
         self.tokens_limit_per_address_per_drop().clear();
-        self.opened_drop().clear();
+        self.is_drop_active().set(false);
     }
 
     // The owner can change the price, for example, a new price for the next nft drop.
@@ -366,10 +368,10 @@ pub trait ElvenTools {
         );
 
         // Check if there is a drop set and the limits per address for the drop are set
-        if !self.opened_drop().is_empty() {
-            let opened_drop_id = self.opened_drop().get();
+        if self.is_drop_active().get() && !self.last_drop().is_empty() {
+            let last_drop_id = self.last_drop().get();
             let minted_per_address_per_drop = self
-                .minted_per_address_per_drop(opened_drop_id)
+                .minted_per_address_per_drop(last_drop_id)
                 .get(&caller)
                 .unwrap_or_default();
             let tokens_limit_per_address_per_drop = self.tokens_limit_per_address_per_drop().get();
@@ -453,18 +455,18 @@ pub trait ElvenTools {
             self.minted_per_address_total(&caller)
                 .update(|sum| *sum += 1);
 
-            if !self.opened_drop().is_empty() {
-                let opened_drop_id = self.opened_drop().get();
+            if self.is_drop_active().get() && !self.last_drop().is_empty() {
+                let last_drop_id = self.last_drop().get();
                 let existing_address_value = self
-                    .minted_per_address_per_drop(opened_drop_id)
+                    .minted_per_address_per_drop(last_drop_id)
                     .get(&caller)
                     .unwrap_or_default();
                 if existing_address_value > 0 {
                     let next_value = existing_address_value + 1;
-                    self.minted_per_address_per_drop(opened_drop_id)
+                    self.minted_per_address_per_drop(last_drop_id)
                         .insert(caller, next_value);
                 } else {
-                    self.minted_per_address_per_drop(opened_drop_id)
+                    self.minted_per_address_per_drop(last_drop_id)
                         .insert(caller, 1);
                 }
             }
@@ -727,10 +729,10 @@ pub trait ElvenTools {
     #[view(getMintedPerAddressPerDrop)]
     fn get_minted_per_address_per_drop(&self, address: ManagedAddress) -> u32 {
         let minted_per_address_per_drop: u32;
-        if !self.opened_drop().is_empty() {
-            let opened_drop_id = self.opened_drop().get();
+        if self.is_drop_active().get() && !self.last_drop().is_empty() {
+            let last_drop_id = self.last_drop().get();
             minted_per_address_per_drop = self
-                .minted_per_address_per_drop(opened_drop_id)
+                .minted_per_address_per_drop(last_drop_id)
                 .get(&address)
                 .unwrap_or_default();
         } else {
@@ -782,16 +784,20 @@ pub trait ElvenTools {
     #[storage_mapper("isAllowlistEnabled")]
     fn is_allowlist_enabled(&self) -> SingleValueMapper<bool>;
 
+    #[view(isDropActive)]
+    #[storage_mapper("isDropActive")]
+    fn is_drop_active(&self) -> SingleValueMapper<bool>;
+
+    #[storage_mapper("lastDrop")]
+    fn last_drop(&self) -> SingleValueMapper<u16>;
+
     #[storage_mapper("allowlist")]
     fn allowlist(&self) -> SetMapper<ManagedAddress>;
 
     #[storage_mapper("mintedPerAddressPerDrop")]
     fn minted_per_address_per_drop(&self, id: u16) -> MapMapper<ManagedAddress, u32>;
 
-    #[storage_mapper("openedDrop")]
-    fn opened_drop(&self) -> SingleValueMapper<u16>;
-
-    #[storage_mapper("iamgeBaseCid")]
+    #[storage_mapper("imageBaseCid")]
     fn image_base_cid(&self) -> SingleValueMapper<ManagedBuffer>;
 
     #[storage_mapper("metadaBaseCid")]

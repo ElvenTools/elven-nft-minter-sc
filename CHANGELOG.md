@@ -1,3 +1,7 @@
+### [1.5.1](https://github.com/juliancwirko/elven-nft-minter-sc/releases/tag/v1.5.1) (2022-02-27)
+- bugfix related to not correctly handling the `unsetDrop` endpoint. The limits per address per drop were not correct when using `unsetDrop`.
+- new query endpoint added `isDropActive`.
+
 ### [1.5.0](https://github.com/juliancwirko/elven-nft-minter-sc/releases/tag/v1.5.0) (2022-02-25)
 - important performance fixes provided by Dorin (Elrond core dev)
 - upgraded to 0.28.0
