@@ -1,10 +1,14 @@
+### [1.5.2](https://github.com/juliancwirko/elven-nft-minter-sc/releases/tag/v1.5.2) (2022-03-03)
+- elrond-wasm upgraded to 0.29.3
+- cleanup for temporary sha256 functionality
+
 ### [1.5.1](https://github.com/juliancwirko/elven-nft-minter-sc/releases/tag/v1.5.1) (2022-02-27)
 - bugfix related to not correctly handling the `unsetDrop` endpoint. The limits per address per drop were not correct when using `unsetDrop`.
 - new query endpoint added `isDropActive`.
 
 ### [1.5.0](https://github.com/juliancwirko/elven-nft-minter-sc/releases/tag/v1.5.0) (2022-02-25)
 - important performance fixes provided by Dorin (Elrond core dev)
-- upgraded to 0.28.0
+- elrond-wasm upgraded to 0.28.0
 - rewrite the URL creation to use static array instead of to_string
 - removed SCResult (no longer needed, require stops execution immediately)
 - using static buffers for hashing instead of the default legacy implementation (which uses dynamic allocation)

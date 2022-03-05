@@ -2,10 +2,9 @@
 
 use core::convert::TryInto;
 
-extern crate alloc;
-
 const NFT_AMOUNT: u32 = 1;
 const ROYALTIES_MAX: u32 = 10_000;
+const HASH_DATA_BUFFER_LEN: usize = 1024;
 // This is the most popular gateway, but it doesn't matter the most important is IPFS CID
 const IPFS_GATEWAY_HOST: &[u8] = "https://ipfs.io/ipfs/".as_bytes();
 const METADATA_KEY_NAME: &[u8] = "metadata:".as_bytes();
@@ -14,12 +13,6 @@ const ATTR_SEPARATOR: &[u8] = ";".as_bytes();
 const URI_SLASH: &[u8] = "/".as_bytes();
 const TAGS_KEY_NAME: &[u8] = "tags:".as_bytes();
 const DEFAULT_IMG_FILE_EXTENSION: &[u8] = ".png".as_bytes();
-
-// temporary until managed sha256 is activated on mainnet
-// cannot use sha256_legacy, as that allocates dynamic memory
-extern "C" {
-    fn sha256(dataOffset: *const u8, length: i32, resultOffset: *mut u8) -> i32;
-}
 
 elrond_wasm::imports!();
 elrond_wasm::derive_imports!();
@@ -420,7 +413,12 @@ pub trait ElvenTools {
         let royalties = self.royalties().get();
 
         let attributes = self.build_attributes_buffer(next_index_to_mint_tuple.1);
-        let hash_buffer = self.hash_attributes(&attributes);
+        
+        let hash_buffer = self
+            .crypto()
+            .sha256_legacy_managed::<HASH_DATA_BUFFER_LEN>(&attributes);
+          
+        let attributes_hash = hash_buffer.as_managed_buffer();
 
         let uris = self.build_uris_vec(next_index_to_mint_tuple.1);
 
@@ -429,7 +427,7 @@ pub trait ElvenTools {
             &amount,
             &token_name,
             &royalties,
-            &hash_buffer,
+            &attributes_hash,
             &attributes,
             &uris,
         );
@@ -481,35 +479,6 @@ pub trait ElvenTools {
 
         // Choose next index to mint here from shuffled Vec
         self.handle_next_index_setup(next_index_to_mint_tuple);
-    }
-
-    fn hash_attributes(&self, attributes: &ManagedBuffer) -> ManagedBuffer {
-        const HASH_DATA_BUFFER_LEN: usize = 1024;
-        const HASH_LEN: usize = 32;
-
-        let attr_len = attributes.len();
-        require!(
-            attr_len <= HASH_DATA_BUFFER_LEN,
-            "Attributes too long, cannot copy into static buffer"
-        );
-
-        let mut attributes_buffer = [0u8; HASH_DATA_BUFFER_LEN];
-        let mut hash_buffer = [0u8; HASH_LEN];
-
-        let attributes_buffer_slice = &mut attributes_buffer[..attr_len];
-        let load_result = attributes.load_slice(0, attributes_buffer_slice);
-        require!(load_result.is_ok(), "Failed to load attributes into buffer");
-
-        unsafe {
-            let hash_result = sha256(
-                attributes_buffer_slice.as_ptr(),
-                attr_len as i32,
-                hash_buffer.as_mut_ptr(),
-            );
-            require!(hash_result == 0, "Failed hashing attributes");
-        }
-
-        ManagedBuffer::new_from_bytes(&hash_buffer[..])
     }
 
     #[endpoint(shuffle)]

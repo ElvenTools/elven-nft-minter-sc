@@ -29,7 +29,7 @@
                     "storage": {
                         "str:amountOfTokensTotal": "0x2710",
                         "str:file_extension": "0x2e6a7067",
-                        "str:iamgeBaseCid": "0x696d61676549706673434944",
+                        "str:imageBaseCid": "0x696d61676549706673434944",
                         "str:isMetadataInUris": "0x01",
                         "str:metadaBaseCid": "0x6d6574616461746149706673434944",
                         "str:nftPrice": "0x0de0b6b3a7640000",
