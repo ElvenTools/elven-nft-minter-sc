@@ -4,7 +4,7 @@
 - Quick jumpstart: [www.elven.tools/docs/jump-start.html](https://www.elven.tools/docs/jump-start.html)
 - Intro video: [https://youtu.be/resGP6a7_34](https://youtu.be/resGP6a7_34)
 
-🚨 Not enough tests! As for the mainnet, use it at your own risk! 🚨
+🚨 It has complete functionality for the first version, but it is still under active development. As for the mainnet, use it at your own risk! Test it first on the devnet/testnet. 🚨
 
 **You can use [elven-tools-cli](https://github.com/juliancwirko/elven-tools-cli) for deployment and interactions!**
 

@@ -1,5 +1,6 @@
 ### [1.5.2](https://github.com/juliancwirko/elven-nft-minter-sc/releases/tag/v1.5.2) (2022-03-03)
 - elrond-wasm upgraded to 0.29.3
+- cleanup for temporary sha256 functionality
 
 ### [1.5.1](https://github.com/juliancwirko/elven-nft-minter-sc/releases/tag/v1.5.1) (2022-02-27)
 - bugfix related to not correctly handling the `unsetDrop` endpoint. The limits per address per drop were not correct when using `unsetDrop`.
