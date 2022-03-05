@@ -3,3 +3,6 @@
 /target/
 */target/
 .vscode
+
+output/elven-nft-minter-dbg.wasm
+output/elven-nft-minter-paths.txt
