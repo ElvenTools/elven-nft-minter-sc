@@ -721,6 +721,11 @@ pub trait ElvenTools {
         self.allowlist().len()
     }
 
+    #[view(isMintActive)]
+    fn is_mint_active(&self) -> bool {
+        !self.paused().get()
+    }
+
     #[view(getNftTokenId)]
     #[storage_mapper("nftTokenId")]
     fn nft_token_id(&self) -> SingleValueMapper<TokenIdentifier>;

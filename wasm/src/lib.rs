@@ -27,6 +27,7 @@ elrond_wasm_node::wasm_endpoints! {
         giveaway
         isAllowlistEnabled
         isDropActive
+        isMintActive
         issueToken
         mint
         pauseMinting
