@@ -23,6 +23,7 @@ elrond_wasm_node::wasm_endpoints! {
         getProvenanceHash
         getTokensLimitPerAddressPerDrop
         getTokensLimitPerAddressTotal
+        getTotalTokens
         getTotalTokensLeft
         giveaway
         isAllowlistEnabled

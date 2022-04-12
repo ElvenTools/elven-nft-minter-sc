@@ -686,6 +686,7 @@ pub trait ElvenTools {
         left_tokens
     }
 
+    // Get the tokens left to mint
     #[view(getTotalTokensLeft)]
     fn total_tokens_left(&self) -> u32 {
         let minted_tokens = self.minted_indexes_total().get();
@@ -693,6 +694,14 @@ pub trait ElvenTools {
         let left_tokens: u32 = amount_of_tokens - minted_tokens as u32;
 
         left_tokens
+    }
+
+    // Get the total amount of tokens
+    #[view(getTotalTokens)]
+    fn total_tokens(&self) -> u32 {
+        let amount_of_tokens = self.amount_of_tokens_total().get();
+
+        amount_of_tokens
     }
 
     #[view(getMintedPerAddressPerDrop)]
