@@ -730,6 +730,10 @@ pub trait ElvenTools {
         self.allowlist().len()
     }
 
+    #[view(getTotalSupply)]
+    #[storage_mapper("amountOfTokensTotal")]
+    fn amount_of_tokens_total(&self) -> SingleValueMapper<u32>;
+
     #[view(getNftTokenId)]
     #[storage_mapper("nftTokenId")]
     fn nft_token_id(&self) -> SingleValueMapper<TokenIdentifier>;
@@ -766,6 +770,10 @@ pub trait ElvenTools {
     #[storage_mapper("isDropActive")]
     fn is_drop_active(&self) -> SingleValueMapper<bool>;
 
+    #[view(isMintingPaused)]
+    #[storage_mapper("paused")]
+    fn paused(&self) -> SingleValueMapper<bool>;
+
     #[storage_mapper("lastDrop")]
     fn last_drop(&self) -> SingleValueMapper<u16>;
 
@@ -784,9 +792,6 @@ pub trait ElvenTools {
     #[storage_mapper("file_extension")]
     fn file_extension(&self) -> SingleValueMapper<ManagedBuffer>;
 
-    #[storage_mapper("amountOfTokensTotal")]
-    fn amount_of_tokens_total(&self) -> SingleValueMapper<u32>;
-
     #[storage_mapper("mintedIndexesTotal")]
     fn minted_indexes_total(&self) -> SingleValueMapper<u32>;
 
@@ -795,9 +800,6 @@ pub trait ElvenTools {
 
     #[storage_mapper("royalties")]
     fn royalties(&self) -> SingleValueMapper<BigUint>;
-
-    #[storage_mapper("paused")]
-    fn paused(&self) -> SingleValueMapper<bool>;
 
     #[storage_mapper("tags")]
     fn tags(&self) -> SingleValueMapper<ManagedBuffer>;
