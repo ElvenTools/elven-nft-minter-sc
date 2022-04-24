@@ -74,19 +74,29 @@ pub trait ElvenTools {
     fn issue_token(
         &self,
         #[payment] issue_cost: BigUint,
-        token_name: ManagedBuffer,
-        token_ticker: ManagedBuffer,
+        collection_token_name: ManagedBuffer,
+        collection_token_ticker: ManagedBuffer,
+        #[var_args] nft_token_name: OptionalValue<ManagedBuffer>,
     ) {
         require!(self.nft_token_id().is_empty(), "Token already issued!");
 
-        self.nft_token_name().set(&token_name);
+        let nfts_name = match nft_token_name {
+          OptionalValue::Some(name) => name,
+          OptionalValue::None => ManagedBuffer::new_from_bytes(b""),
+        };
+
+        if nfts_name.len() != 0 {
+          self.nft_token_name().set(&nfts_name);
+        }
+
+        self.collection_token_name().set(&collection_token_name);
 
         self.send()
             .esdt_system_sc_proxy()
             .issue_non_fungible(
                 issue_cost,
-                &token_name,
-                &token_ticker,
+                &collection_token_name,
+                &collection_token_ticker,
                 NonFungibleTokenProperties {
                     can_freeze: false,
                     can_wipe: false,
@@ -622,7 +632,14 @@ pub trait ElvenTools {
 
     fn build_token_name_buffer(&self, index_to_mint: u32) -> ManagedBuffer {
         let mut full_token_name = ManagedBuffer::new();
-        let token_name_from_storage = self.nft_token_name().get();
+
+        let token_name_from_storage;
+        if !self.nft_token_name().is_empty() {
+          token_name_from_storage = self.nft_token_name().get();
+        } else {
+          token_name_from_storage = self.collection_token_name().get();
+        }
+        
         let token_index = self.decimal_to_ascii(index_to_mint);
         let hash_sign = ManagedBuffer::new_from_bytes(" #".as_bytes());
 
@@ -724,6 +741,10 @@ pub trait ElvenTools {
     #[view(getNftTokenId)]
     #[storage_mapper("nftTokenId")]
     fn nft_token_id(&self) -> SingleValueMapper<TokenIdentifier>;
+
+    #[view(getCollectionTokenName)]
+    #[storage_mapper("collectionTokenName")]
+    fn collection_token_name(&self) -> SingleValueMapper<ManagedBuffer>;
 
     #[view(getNftTokenName)]
     #[storage_mapper("nftTokenName")]

@@ -5,9 +5,11 @@
 - Quick jumpstart: [www.elven.tools/docs/jump-start.html](https://www.elven.tools/docs/jump-start.html)
 - Intro video: [www.youtu.be/resGP6a7_34](https://youtu.be/resGP6a7_34)
 
-🚨 Be aware that the Smart Contract doesn't have any audits. It has complete functionality for the first version, but it is still needs some improvements. Test it first on the devnet/testnet. 🚨
+🚨 Be aware that the Smart Contract doesn't have any audits. It has complete functionality for the first version, but it still needs some improvements. Test it first on the devnet/testnet. 🚨
 
 **You can use [elven-tools-cli](https://github.com/ElvenTools/elven-tools-cli) for deployment and interactions!**
+
+**You can use [elven-tools-dapp](https://github.com/ElvenTools/elven-tools-dapp) as your frontend dapp for minting process! (NextJS based app)**
 
 ### What is it?
 

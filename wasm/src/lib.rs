@@ -14,6 +14,7 @@ elrond_wasm_node::wasm_endpoints! {
         enableAllowlist
         getAllowlistAddressCheck
         getAllowlistSize
+        getCollectionTokenName
         getDropTokensLeft
         getMintedPerAddressPerDrop
         getMintedPerAddressTotal

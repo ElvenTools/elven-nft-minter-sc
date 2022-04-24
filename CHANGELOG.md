@@ -1,3 +1,8 @@
+### [1.6.0](https://github.com/ElvenTools/elven-nft-minter-sc/releases/tag/v1.6.0) (2022-04-24)
+- elrond-wasm upgraded to 0.30.0
+- allow using a different name for NFT tokens. Till now, it was the name of the collection handler
+- name change for the storage for the collection token name. `getCollectionTokenName` will now return collection name, and `getNftTokenName` will return the NFTs name if set.
+
 ### [1.5.2](https://github.com/ElvenTools/elven-nft-minter-sc/releases/tag/v1.5.2) (2022-03-05)
 - elrond-wasm upgraded to 0.29.3
 - cleanup for temporary sha256 functionality
