@@ -10,6 +10,7 @@ elrond_wasm_node::wasm_endpoints! {
         callBack
         changeBaseCids
         claimScFunds
+        clearAllowlist
         disableAllowlist
         enableAllowlist
         getAllowlistAddressCheck
@@ -33,6 +34,7 @@ elrond_wasm_node::wasm_endpoints! {
         pauseMinting
         populateAllowlist
         populateIndexes
+        removeAllowlistAddress
         setDrop
         setLocalRoles
         setNewPrice

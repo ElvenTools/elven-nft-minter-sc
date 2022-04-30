@@ -81,12 +81,12 @@ pub trait ElvenTools {
         require!(self.nft_token_id().is_empty(), "Token already issued!");
 
         let nfts_name = match nft_token_name {
-          OptionalValue::Some(name) => name,
-          OptionalValue::None => ManagedBuffer::new_from_bytes(b""),
+            OptionalValue::Some(name) => name,
+            OptionalValue::None => ManagedBuffer::new_from_bytes(b""),
         };
 
         if nfts_name.len() != 0 {
-          self.nft_token_name().set(&nfts_name);
+            self.nft_token_name().set(&nfts_name);
         }
 
         self.collection_token_name().set(&collection_token_name);
@@ -309,6 +309,18 @@ pub trait ElvenTools {
         self.allowlist().extend(&addresses);
     }
 
+    #[only_owner]
+    #[endpoint(clearAllowlist)]
+    fn clear_allowlist(&self) {
+        self.allowlist().clear();
+    }
+
+    #[only_owner]
+    #[endpoint(removeAllowlistAddress)]
+    fn remove_allowlist_address(&self, address: ManagedAddress) {
+        self.allowlist().remove(&address);
+    }
+
     // Main mint function - takes the payment sum for all tokens to mint.
     #[payable("EGLD")]
     #[endpoint(mint)]
@@ -423,11 +435,11 @@ pub trait ElvenTools {
         let royalties = self.royalties().get();
 
         let attributes = self.build_attributes_buffer(next_index_to_mint_tuple.1);
-        
+
         let hash_buffer = self
             .crypto()
             .sha256_legacy_managed::<HASH_DATA_BUFFER_LEN>(&attributes);
-          
+
         let attributes_hash = hash_buffer.as_managed_buffer();
 
         let uris = self.build_uris_vec(next_index_to_mint_tuple.1);
@@ -635,11 +647,11 @@ pub trait ElvenTools {
 
         let token_name_from_storage;
         if !self.nft_token_name().is_empty() {
-          token_name_from_storage = self.nft_token_name().get();
+            token_name_from_storage = self.nft_token_name().get();
         } else {
-          token_name_from_storage = self.collection_token_name().get();
+            token_name_from_storage = self.collection_token_name().get();
         }
-        
+
         let token_index = self.decimal_to_ascii(index_to_mint);
         let hash_sign = ManagedBuffer::new_from_bytes(" #".as_bytes());
 

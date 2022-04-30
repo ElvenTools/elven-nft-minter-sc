@@ -207,14 +207,14 @@ dependencies = [
 
 [[package]]
 name = "elven-nft-minter"
-version = "1.6.0"
+version = "1.6.1"
 dependencies = [
  "elrond-wasm",
 ]
 
 [[package]]
 name = "elven-nft-minter-meta"
-version = "1.6.0"
+version = "1.6.1"
 dependencies = [
  "elrond-wasm-debug",
  "elven-nft-minter",

@@ -9,7 +9,7 @@
         },
         "contractCrate": {
             "name": "elven-nft-minter",
-            "version": "1.6.0"
+            "version": "1.6.1"
         },
         "framework": {
             "name": "elrond-wasm",
@@ -233,6 +233,25 @@
                 {
                     "name": "addresses",
                     "type": "List<Address>"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "clearAllowlist",
+            "onlyOwner": true,
+            "mutability": "mutable",
+            "inputs": [],
+            "outputs": []
+        },
+        {
+            "name": "removeAllowlistAddress",
+            "onlyOwner": true,
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "address",
+                    "type": "Address"
                 }
             ],
             "outputs": []
