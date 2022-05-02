@@ -1,3 +1,9 @@
+### [1.6.2](https://github.com/ElvenTools/elven-nft-minter-sc/releases/tag/v1.6.2) (2022-05-02)
+- new endpoints:
+  - `getTotalSupply` - total collection supply
+  - `isMintingPaused` - check if minting is currently paused
+  - `getTotalSupplyOfCurrentDrop` - total supply per current drop
+
 ### [1.6.1](https://github.com/ElvenTools/elven-nft-minter-sc/releases/tag/v1.6.1) (2022-04-30)
 - new endpoint `clearAllowlist` - It will clear the whole allowlist. The best is to keep max 1300 addresses in the allowlist at a time. Of course, if only you plan to clear it later. If you keep more and want to clear it, you can reach the gas limit for a transaction. So it would be best to split the allowlist per drop, keep it as small as possible and clear it each time.
 - new endpoint `removeAllowlistAddress` - removes singe address from allowlist

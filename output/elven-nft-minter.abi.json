@@ -9,7 +9,7 @@
         },
         "contractCrate": {
             "name": "elven-nft-minter",
-            "version": "1.6.1"
+            "version": "1.6.2"
         },
         "framework": {
             "name": "elrond-wasm",
@@ -438,6 +438,36 @@
             "outputs": [
                 {
                     "type": "bool"
+                }
+            ]
+        },
+        {
+            "name": "getTotalSupply",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "u32"
+                }
+            ]
+        },
+        {
+            "name": "isMintingPaused",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "bool"
+                }
+            ]
+        },
+        {
+            "name": "getTotalSupplyOfCurrentDrop",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "u32"
                 }
             ]
         }

@@ -25,10 +25,13 @@ elrond_wasm_node::wasm_endpoints! {
         getProvenanceHash
         getTokensLimitPerAddressPerDrop
         getTokensLimitPerAddressTotal
+        getTotalSupply
+        getTotalSupplyOfCurrentDrop
         getTotalTokensLeft
         giveaway
         isAllowlistEnabled
         isDropActive
+        isMintingPaused
         issueToken
         mint
         pauseMinting
