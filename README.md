@@ -11,6 +11,10 @@
 
 **You can use [elven-tools-dapp](https://github.com/ElvenTools/elven-tools-dapp) as your frontend dapp for minting process! (NextJS based app)**
 
+### Tracking the progress
+
+- [Elven Tools Smart Contract kanban](https://github.com/orgs/ElvenTools/projects/4)
+
 ### What is it?
 
 You are reading about the Smart Contract designed for the Elrond blockchain. Its primary purpose is to provide a simple logic for minting and buying a previously configured collection of NFTs. It does it in a randomized way. Version 1 of it supports:
@@ -40,9 +44,6 @@ For all commands, check out the docs: [www.elven.tools/docs/sc-endpoints.html](h
 ### Other ways of using it
 
 You can always clone it and change it as you need. The best is to use the Elven Tools CLI tool, which can also be configured after changes. But nothing stops you from using the [erdpy](https://docs.elrond.com/sdk-and-tools/erdpy/erdpy/) and interacting with this Smart Contract. It is all up to you.
-
-#### TODO:
-- check [issues](https://github.com/ElvenTools/elven-nft-minter-sc/issues)
 
 **Rust devs, I would appreciate it if you could leave your insights ❤️**
 
