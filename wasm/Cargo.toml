@@ -1,6 +1,6 @@
 [package]
 name = "elven-nft-minter-wasm"
-version = "1.6.2"
+version = "1.6.3"
 authors = ["Julian Ćwirko <julian.cwirko@gmail.com>"]
 edition = "2018"
 publish = false
@@ -19,10 +19,10 @@ panic = "abort"
 path = ".."
 
 [dependencies.elrond-wasm-node]
-version = "0.30.0"
+version = "0.31.1"
 
 [dependencies.elrond-wasm-output]
-version = "0.30.0"
+version = "0.31.1"
 features = ["wasm-output-mode"]
 
 [workspace]

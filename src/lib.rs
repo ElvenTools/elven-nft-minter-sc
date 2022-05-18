@@ -4,7 +4,6 @@ use core::convert::TryInto;
 
 const NFT_AMOUNT: u32 = 1;
 const ROYALTIES_MAX: u32 = 10_000;
-const HASH_DATA_BUFFER_LEN: usize = 1024;
 // This is the most popular gateway, but it doesn't matter the most important is IPFS CID
 const IPFS_GATEWAY_HOST: &[u8] = "https://ipfs.io/ipfs/".as_bytes();
 const METADATA_KEY_NAME: &[u8] = "metadata:".as_bytes();
@@ -28,10 +27,10 @@ pub trait ElvenTools {
         tokens_limit_per_address: u32,
         royalties: BigUint,
         selling_price: BigUint,
-        #[var_args] file_extension: OptionalValue<ManagedBuffer>,
-        #[var_args] tags: OptionalValue<ManagedBuffer>,
-        #[var_args] provenance_hash: OptionalValue<ManagedBuffer>,
-        #[var_args] is_metadata_in_uris: OptionalValue<bool>,
+        file_extension: OptionalValue<ManagedBuffer>,
+        tags: OptionalValue<ManagedBuffer>,
+        provenance_hash: OptionalValue<ManagedBuffer>,
+        is_metadata_in_uris: OptionalValue<bool>,
     ) {
         require!(royalties <= ROYALTIES_MAX, "Royalties cannot exceed 100%!");
         require!(
@@ -73,11 +72,11 @@ pub trait ElvenTools {
     #[endpoint(issueToken)]
     fn issue_token(
         &self,
-        #[payment] issue_cost: BigUint,
         collection_token_name: ManagedBuffer,
         collection_token_ticker: ManagedBuffer,
-        #[var_args] nft_token_name: OptionalValue<ManagedBuffer>,
+        nft_token_name: OptionalValue<ManagedBuffer>,
     ) {
+        let issue_cost = self.call_value().egld_value();
         require!(self.nft_token_id().is_empty(), "Token already issued!");
 
         let nfts_name = match nft_token_name {
@@ -147,7 +146,7 @@ pub trait ElvenTools {
     fn set_drop(
         &self,
         amount_of_tokens_per_drop: u32,
-        #[var_args] tokens_limit_per_address_per_drop: OptionalValue<u32>,
+        tokens_limit_per_address_per_drop: OptionalValue<u32>,
     ) {
         let total_tokens_left = self.total_tokens_left();
 
@@ -321,10 +320,11 @@ pub trait ElvenTools {
         self.allowlist().remove(&address);
     }
 
-    // Main mint function - takes the payment sum for all tokens to mint.
+    // Main mint function - requires the payment sum for all tokens to mint.
     #[payable("EGLD")]
     #[endpoint(mint)]
-    fn mint(&self, #[payment_amount] payment_amount: BigUint, amount_of_tokens: u32) {
+    fn mint(&self, amount_of_tokens: u32) {
+        let payment_amount = self.call_value().egld_value();
         let caller = self.blockchain().get_caller();
 
         let is_allowlist_enabled = self.is_allowlist_enabled().get();
@@ -438,7 +438,7 @@ pub trait ElvenTools {
 
         let hash_buffer = self
             .crypto()
-            .sha256_legacy_managed::<HASH_DATA_BUFFER_LEN>(&attributes);
+            .sha256(&attributes);
 
         let attributes_hash = hash_buffer.as_managed_buffer();
 

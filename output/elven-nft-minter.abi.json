@@ -9,11 +9,12 @@
         },
         "contractCrate": {
             "name": "elven-nft-minter",
-            "version": "1.6.2"
+            "version": "1.6.3",
+            "git_version": "f414d94-modified"
         },
         "framework": {
             "name": "elrond-wasm",
-            "version": "0.30.0"
+            "version": "0.31.1"
         }
     },
     "name": "ElvenTools",

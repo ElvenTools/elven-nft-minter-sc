@@ -1,3 +1,7 @@
+### [1.6.3](https://github.com/ElvenTools/elven-nft-minter-sc/releases/tag/v1.6.3) (2022-05-18)
+- elrond-wasm framework update to 0.31.1
+- small adjustments in the code
+
 ### [1.6.2](https://github.com/ElvenTools/elven-nft-minter-sc/releases/tag/v1.6.2) (2022-05-02)
 - new endpoints:
   - `getTotalSupply` - total collection supply
