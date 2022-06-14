@@ -162,9 +162,9 @@ dependencies = [
 
 [[package]]
 name = "elrond-wasm"
-version = "0.31.1"
+version = "0.32.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3bbc0a1a63acfd1fdacb7061e6dee94096cb5f93b2844c661a7e2c9a702a1ac9"
+checksum = "f4bd5374b7fe466706a6528811371997f973171f2c2db2fdea1416ac4f5be2bd"
 dependencies = [
  "bitflags",
  "elrond-codec",
@@ -177,9 +177,9 @@ dependencies = [
 
 [[package]]
 name = "elrond-wasm-debug"
-version = "0.31.1"
+version = "0.32.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9af3813c596a35ccde4aa6b17415a719549dbf10d2bf0b15069a0d516dc7a1e4"
+checksum = "c24b50224cdb2f0364cc05186c3e472c86190f499f71c9de86ad05a098fda2a6"
 dependencies = [
  "cargo_toml",
  "ed25519-dalek",
@@ -202,9 +202,9 @@ dependencies = [
 
 [[package]]
 name = "elrond-wasm-derive"
-version = "0.31.1"
+version = "0.32.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d20b25f177aae7861baf2a4bd59efc181e5d8f0fb8c0a04855a426b1533abbc3"
+checksum = "6be3bc8527674a318e79f564bd06e8722a155b186bf2e73b81ed9ca71a79323d"
 dependencies = [
  "hex",
  "proc-macro2",
@@ -215,7 +215,7 @@ dependencies = [
 
 [[package]]
 name = "elven-nft-minter"
-version = "1.6.3"
+version = "1.7.0"
 dependencies = [
  "elrond-wasm",
  "elrond-wasm-debug",
@@ -334,9 +334,9 @@ checksum = "1bf2e165bb3457c8e098ea76f3e3bc9db55f87aa90d52d0e6be741470916aaa4"
 
 [[package]]
 name = "mandos"
-version = "0.13.1"
+version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2a52d1af4bea9a4f32ec6fa61859d188ac5985025ebf3266f78575507af3db6a"
+checksum = "f9b96f0428838e3ba1851a52aa031842cd3bed759d198884f922099ab983f01d"
 dependencies = [
  "elrond-wasm",
  "hex",

@@ -254,7 +254,7 @@ pub trait ElvenTools {
             &self.blockchain().get_caller(),
             &self
                 .blockchain()
-                .get_sc_balance(&TokenIdentifier::egld(), 0),
+                .get_sc_balance(&EgldOrEsdtTokenIdentifier::egld(), 0),
             &[],
         );
     }
@@ -469,7 +469,7 @@ pub trait ElvenTools {
         }
 
         self.send()
-            .direct(&receiver, &token, nonce, &BigUint::from(NFT_AMOUNT), &[]);
+            .direct_esdt(&receiver, &token, nonce, &BigUint::from(NFT_AMOUNT), &[]);
 
         if payment_amount > 0 {
             self.minted_per_address_total(&caller)
@@ -492,7 +492,7 @@ pub trait ElvenTools {
             }
 
             let payment_nonce: u64 = 0;
-            let payment_token = &TokenIdentifier::egld();
+            let payment_token = &EgldOrEsdtTokenIdentifier::egld();
 
             let owner = self.blockchain().get_owner_address();
             self.send()
@@ -535,28 +535,21 @@ pub trait ElvenTools {
     }
 
     #[callback]
-    fn issue_callback(&self, #[call_result] result: ManagedAsyncCallResult<TokenIdentifier>) {
+    fn issue_callback(&self, #[call_result] result: ManagedAsyncCallResult<EgldOrEsdtTokenIdentifier>) {
         match result {
             ManagedAsyncCallResult::Ok(token_id) => {
-                self.nft_token_id().set(&token_id);
+                self.nft_token_id().set(&token_id.unwrap_esdt());
+                self.shuffle();
             }
             ManagedAsyncCallResult::Err(_) => {
                 let caller = self.blockchain().get_owner_address();
-                let (returned_tokens, token_id) = self.call_value().payment_token_pair();
-                if token_id.is_egld() && returned_tokens > 0 {
+                let returned = self.call_value().egld_or_single_esdt();
+                if returned.token_identifier.is_egld() && returned.amount > 0 {
                     self.send()
-                        .direct(&caller, &token_id, 0, &returned_tokens, &[]);
+                        .direct(&caller, &returned.token_identifier, 0, &returned.amount, &[]);
                 }
             }
         }
-    }
-
-    fn initial_random_mint_index(&self) -> u32 {
-        let total_tokens = self.amount_of_tokens_total().get();
-        let mut rand_source = RandomnessSource::<Self::Api>::new();
-        let rand_index = rand_source.next_u32_in_range(1, total_tokens + 1);
-
-        rand_index
     }
 
     fn handle_next_index_setup(&self, minted_index_tuple: (usize, u32)) {
