@@ -36,7 +36,6 @@ elrond_wasm_node::wasm_endpoints! {
         mint
         pauseMinting
         populateAllowlist
-        populateIndexes
         removeAllowlistAddress
         setDrop
         setLocalRoles

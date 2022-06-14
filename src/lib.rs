@@ -223,11 +223,6 @@ pub trait ElvenTools {
     fn giveaway(&self, address: ManagedAddress, amount_of_tokens: u32) {
         require!(!self.nft_token_id().is_empty(), "Token not issued!");
 
-        require!(
-            self.initial_shuffle_triggered().get(),
-            "Run the shuffle mechanism at least once!"
-        );
-
         let token = self.nft_token_id().get();
         let roles = self.blockchain().get_esdt_local_roles(&token);
 
@@ -257,37 +252,6 @@ pub trait ElvenTools {
                 .get_sc_balance(&EgldOrEsdtTokenIdentifier::egld(), 0),
             &[],
         );
-    }
-
-    #[only_owner]
-    #[endpoint(populateIndexes)]
-    fn populate_indexes(&self, amount: u32) {
-        let initial_indexes_populate_done = self.initial_indexes_populate_done();
-
-        require!(
-            !initial_indexes_populate_done.get(),
-            "The indexes are already properly populated!"
-        );
-
-        let amount_of_tokens = self.amount_of_tokens_total().get();
-        let mut v_mapper = self.tokens_left_to_mint();
-        let v_mapper_len = v_mapper.len() as u32;
-        let total_amount = v_mapper_len + amount;
-
-        require!(
-            amount > 0 && total_amount <= amount_of_tokens,
-            "Wrong amount of tokens!"
-        );
-
-        let from = v_mapper_len + 1;
-        let to = from + amount - 1;
-        for i in from..=to {
-            v_mapper.push(&i);
-        }
-
-        if amount_of_tokens == total_amount {
-            self.initial_indexes_populate_done().set(true);
-        }
     }
 
     #[only_owner]
@@ -347,14 +311,6 @@ pub trait ElvenTools {
         require!(
             roles.has_role(&EsdtLocalRole::NftCreate),
             "ESDTNFTCreate role not set!"
-        );
-        require!(
-          self.initial_indexes_populate_done().get(),
-          "The indexes are not properly populated! Double check the deployment process and populateIndexes endpoint calls."
-        );
-        require!(
-            self.initial_shuffle_triggered().get(),
-            "Run the shuffle mechanism at least once!"
         );
         require!(
             self.paused().is_empty(),
@@ -499,37 +455,31 @@ pub trait ElvenTools {
                 .direct(&owner, &payment_token, payment_nonce, &payment_amount, &[]);
         }
 
-        // Choose next index to mint here from shuffled Vec
+        // Choose next index to mint here
         self.handle_next_index_setup(next_index_to_mint_tuple);
     }
 
     #[endpoint(shuffle)]
     fn shuffle(&self) {
         require!(!self.nft_token_id().is_empty(), "Token not issued!");
-        let v_mapper = self.tokens_left_to_mint();
+        let uid_mapper = self.tokens_left_to_mint();
         require!(
-            !v_mapper.is_empty(),
+            !uid_mapper.is_empty(),
             "There is nothing to shuffle. Indexes not populated or there are no tokens to mint left!"
         );
-
-        let initial_shuffle_triggered = self.initial_shuffle_triggered().get();
-
-        if !initial_shuffle_triggered {
-            self.initial_shuffle_triggered().set(true);
-        }
 
         self.do_shuffle();
     }
 
     fn do_shuffle(&self) {
-        let vec = self.tokens_left_to_mint();
+        let uid = self.tokens_left_to_mint();
 
-        let vec_len = vec.len();
+        let uid_len = uid.len();
         let mut rand_source = RandomnessSource::<Self::Api>::new();
 
-        let index = rand_source.next_usize_in_range(1, vec_len + 1);
+        let index = rand_source.next_usize_in_range(1, uid_len + 1);
 
-        let choosen_item = vec.get(index);
+        let choosen_item = uid.get(index);
 
         self.next_index_to_mint().set((index, choosen_item));
     }
@@ -538,7 +488,9 @@ pub trait ElvenTools {
     fn issue_callback(&self, #[call_result] result: ManagedAsyncCallResult<EgldOrEsdtTokenIdentifier>) {
         match result {
             ManagedAsyncCallResult::Ok(token_id) => {
+                let tokens_number = self.amount_of_tokens_total().get();
                 self.nft_token_id().set(&token_id.unwrap_esdt());
+                self.tokens_left_to_mint().set_initial_len(tokens_number.try_into().unwrap());
                 self.shuffle();
             }
             ManagedAsyncCallResult::Err(_) => {
@@ -552,7 +504,7 @@ pub trait ElvenTools {
         }
     }
 
-    fn handle_next_index_setup(&self, minted_index_tuple: (usize, u32)) {
+    fn handle_next_index_setup(&self, minted_index_tuple: (usize, usize)) {
         let is_minted_indexes_total_empty = self.minted_indexes_total().is_empty();
         if is_minted_indexes_total_empty {
             self.minted_indexes_total().set(1);
@@ -573,13 +525,13 @@ pub trait ElvenTools {
         let total_tokens_left = self.total_tokens_left();
 
         if total_tokens_left > 0 {
-            let mut vec = self.tokens_left_to_mint();
-            vec.swap_remove(minted_index_tuple.0);
+            let mut uid = self.tokens_left_to_mint();
+            let _ = uid.swap_remove(minted_index_tuple.0);
             self.do_shuffle();
         }
     }
 
-    fn build_uris_vec(&self, index_to_mint: u32) -> ManagedVec<ManagedBuffer> {
+    fn build_uris_vec(&self, index_to_mint: usize) -> ManagedVec<ManagedBuffer> {
         let is_metadata_in_uris = self.is_metadata_in_uris().get();
 
         let mut uris = ManagedVec::new();
@@ -589,7 +541,7 @@ pub trait ElvenTools {
         let uri_slash = ManagedBuffer::new_from_bytes(URI_SLASH);
         let metadata_file_extension = ManagedBuffer::new_from_bytes(METADATA_FILE_EXTENSION);
         let image_file_extension = self.file_extension().get();
-        let file_index = self.decimal_to_ascii(index_to_mint);
+        let file_index = self.decimal_to_ascii(index_to_mint.try_into().unwrap());
 
         let mut img_ipfs_gateway_uri = ManagedBuffer::new_from_bytes(IPFS_GATEWAY_HOST);
         img_ipfs_gateway_uri.append(&image_cid);
@@ -613,9 +565,9 @@ pub trait ElvenTools {
     }
 
     // This can be probably optimized with attributes struct, had problems with decoding on the api side
-    fn build_attributes_buffer(&self, index_to_mint: u32) -> ManagedBuffer {
+    fn build_attributes_buffer(&self, index_to_mint: usize) -> ManagedBuffer {
         let metadata_key_name = ManagedBuffer::new_from_bytes(METADATA_KEY_NAME);
-        let metadata_index_file = self.decimal_to_ascii(index_to_mint);
+        let metadata_index_file = self.decimal_to_ascii(index_to_mint.try_into().unwrap());
         let metadata_file_extension = ManagedBuffer::new_from_bytes(METADATA_FILE_EXTENSION);
         let metadata_cid = self.metadata_base_cid().get();
         let separator = ManagedBuffer::new_from_bytes(ATTR_SEPARATOR);
@@ -635,7 +587,7 @@ pub trait ElvenTools {
         attributes
     }
 
-    fn build_token_name_buffer(&self, index_to_mint: u32) -> ManagedBuffer {
+    fn build_token_name_buffer(&self, index_to_mint: usize) -> ManagedBuffer {
         let mut full_token_name = ManagedBuffer::new();
 
         let token_name_from_storage;
@@ -645,7 +597,7 @@ pub trait ElvenTools {
             token_name_from_storage = self.collection_token_name().get();
         }
 
-        let token_index = self.decimal_to_ascii(index_to_mint);
+        let token_index = self.decimal_to_ascii(index_to_mint.try_into().unwrap());
         let hash_sign = ManagedBuffer::new_from_bytes(" #".as_bytes());
 
         full_token_name.append(&token_name_from_storage);
@@ -826,16 +778,12 @@ pub trait ElvenTools {
     fn tags(&self) -> SingleValueMapper<ManagedBuffer>;
 
     #[storage_mapper("nextIndexToMint")]
-    fn next_index_to_mint(&self) -> SingleValueMapper<(usize, u32)>;
+    fn next_index_to_mint(&self) -> SingleValueMapper<(usize, usize)>;
 
     #[storage_mapper("tokensLeftToMint")]
-    fn tokens_left_to_mint(&self) -> VecMapper<u32>;
-
-    #[storage_mapper("initialShuffleTriggered")]
-    fn initial_shuffle_triggered(&self) -> SingleValueMapper<bool>;
-
-    #[storage_mapper("initialIndexesPopulateDone")]
-    fn initial_indexes_populate_done(&self) -> SingleValueMapper<bool>;
+    fn tokens_left_to_mint(
+        &self,
+    ) -> UniqueIdMapper<Self::Api>;
 
     #[storage_mapper("isMetadataInUris")]
     fn is_metadata_in_uris(&self) -> SingleValueMapper<bool>;

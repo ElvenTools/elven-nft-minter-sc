@@ -10,7 +10,7 @@
         "contractCrate": {
             "name": "elven-nft-minter",
             "version": "1.7.0",
-            "git_version": "f68438c-modified"
+            "git_version": "a8ec175-modified"
         },
         "framework": {
             "name": "elrond-wasm",
@@ -198,18 +198,6 @@
             "onlyOwner": true,
             "mutability": "mutable",
             "inputs": [],
-            "outputs": []
-        },
-        {
-            "name": "populateIndexes",
-            "onlyOwner": true,
-            "mutability": "mutable",
-            "inputs": [
-                {
-                    "name": "amount",
-                    "type": "u32"
-                }
-            ],
             "outputs": []
         },
         {
