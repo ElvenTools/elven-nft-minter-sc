@@ -1,4 +1,4 @@
-### [1.7.0](https://github.com/ElvenTools/elven-nft-minter-sc/releases/tag/v1.7.0) (2022-06-14)
+### [1.7.0](https://github.com/ElvenTools/elven-nft-minter-sc/releases/tag/v1.7.0) (2022-06-18)
 - elrond-wasm framework update to 0.32.0
 - switched to `UniqueIdMapper`, removed `populateIndexed` (previous, less performant and more expensive solution)
 - added the initial shuffle to the `issue_token` callback, this way you don't need to call it initially

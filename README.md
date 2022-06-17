@@ -5,7 +5,7 @@
 - Quick jumpstart: [www.elven.tools/docs/jump-start.html](https://www.elven.tools/docs/jump-start.html)
 - Intro video: [www.youtu.be/resGP6a7_34](https://youtu.be/resGP6a7_34)
 
-🚨 Be aware that the Smart Contract doesn't have any audits. It has complete functionality for the first version, but it still needs some improvements. Test it first on the devnet/testnet. 🚨
+Be aware that the Smart Contract doesn't have any audits. It has complete functionality for the first version, but it still needs some improvements. Test it first on the devnet/testnet.
 
 **You can use [elven-tools-cli](https://github.com/ElvenTools/elven-tools-cli) for deployment and interactions!**
 
@@ -25,9 +25,12 @@ You are reading about the Smart Contract designed for the Elrond blockchain. Its
 - random mint and distribution
 - minting multiple NFTs in one transaction
 - giveaway options
-- possibility to split the process into drops/waves
+- possibility to split the process into drops/waves/batches, here it is called 'drop'
+- configuring the allowlist
 - claiming the developer rewards
 - changing basic setup where it is possible
+
+Start here: [Elven Tools Jumpstart](https://www.elven.tools/docs/jump-start.html)
 
 Check the [abi](https://github.com/ElvenTools/elven-nft-minter-sc/blob/main/output/elven-nft-minter.abi.json) file for more information.
 
@@ -55,6 +58,7 @@ You can always clone it and change it as you need. The best is to use the Elven 
 ### You may also like
 
 - [NFT Art Maker](https://github.com/juliancwirko/nft-art-maker) - generates images and metadata files and packs them into CAR files, all from provided PNG layers.
+- [Buildo Begins](https://github.com/ElrondDevGuild/buildo-begins) - CLI toolset for interacting with the Elrond blockchain, APIs and smart contracts
 
 ### Issues and ideas
 
