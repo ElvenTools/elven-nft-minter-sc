@@ -6,3 +6,5 @@
 
 output/elven-nft-minter-dbg.wasm
 output/elven-nft-minter-paths.txt
+output/elven-nft-minter.wat
+output/elven-nft-minter.imports.json

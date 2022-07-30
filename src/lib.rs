@@ -250,7 +250,6 @@ pub trait ElvenTools {
             &self
                 .blockchain()
                 .get_sc_balance(&EgldOrEsdtTokenIdentifier::egld(), 0),
-            &[],
         );
     }
 
@@ -285,6 +284,7 @@ pub trait ElvenTools {
     }
 
     // Main mint function - requires the payment sum for all tokens to mint.
+    #[only_user_account]
     #[payable("EGLD")]
     #[endpoint(mint)]
     fn mint(&self, amount_of_tokens: u32) {
@@ -392,9 +392,7 @@ pub trait ElvenTools {
 
         let attributes = self.build_attributes_buffer(next_index_to_mint_tuple.1);
 
-        let hash_buffer = self
-            .crypto()
-            .sha256(&attributes);
+        let hash_buffer = self.crypto().sha256(&attributes);
 
         let attributes_hash = hash_buffer.as_managed_buffer();
 
@@ -425,7 +423,7 @@ pub trait ElvenTools {
         }
 
         self.send()
-            .direct_esdt(&receiver, &token, nonce, &BigUint::from(NFT_AMOUNT), &[]);
+            .direct_esdt(&receiver, &token, nonce, &BigUint::from(NFT_AMOUNT));
 
         if payment_amount > 0 {
             self.minted_per_address_total(&caller)
@@ -452,13 +450,14 @@ pub trait ElvenTools {
 
             let owner = self.blockchain().get_owner_address();
             self.send()
-                .direct(&owner, &payment_token, payment_nonce, &payment_amount, &[]);
+                .direct(&owner, &payment_token, payment_nonce, &payment_amount);
         }
 
         // Choose next index to mint here
         self.handle_next_index_setup(next_index_to_mint_tuple);
     }
 
+    #[only_user_account]
     #[endpoint(shuffle)]
     fn shuffle(&self) {
         require!(!self.nft_token_id().is_empty(), "Token not issued!");
@@ -485,12 +484,16 @@ pub trait ElvenTools {
     }
 
     #[callback]
-    fn issue_callback(&self, #[call_result] result: ManagedAsyncCallResult<EgldOrEsdtTokenIdentifier>) {
+    fn issue_callback(
+        &self,
+        #[call_result] result: ManagedAsyncCallResult<EgldOrEsdtTokenIdentifier>,
+    ) {
         match result {
             ManagedAsyncCallResult::Ok(token_id) => {
                 let tokens_number = self.amount_of_tokens_total().get();
                 self.nft_token_id().set(&token_id.unwrap_esdt());
-                self.tokens_left_to_mint().set_initial_len(tokens_number.try_into().unwrap());
+                self.tokens_left_to_mint()
+                    .set_initial_len(tokens_number.try_into().unwrap());
                 self.shuffle();
             }
             ManagedAsyncCallResult::Err(_) => {
@@ -498,7 +501,7 @@ pub trait ElvenTools {
                 let returned = self.call_value().egld_or_single_esdt();
                 if returned.token_identifier.is_egld() && returned.amount > 0 {
                     self.send()
-                        .direct(&caller, &returned.token_identifier, 0, &returned.amount, &[]);
+                        .direct(&caller, &returned.token_identifier, 0, &returned.amount);
                 }
             }
         }
@@ -781,9 +784,7 @@ pub trait ElvenTools {
     fn next_index_to_mint(&self) -> SingleValueMapper<(usize, usize)>;
 
     #[storage_mapper("tokensLeftToMint")]
-    fn tokens_left_to_mint(
-        &self,
-    ) -> UniqueIdMapper<Self::Api>;
+    fn tokens_left_to_mint(&self) -> UniqueIdMapper<Self::Api>;
 
     #[storage_mapper("isMetadataInUris")]
     fn is_metadata_in_uris(&self) -> SingleValueMapper<bool>;
