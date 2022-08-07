@@ -3,7 +3,7 @@
 - Docs: [www.elven.tools](https://www.elven.tools)
 - Elven Tools Twitter: [www.twitter.com/ElvenTools](https://twitter.com/ElvenTools)
 - Quick jumpstart: [www.elven.tools/docs/jump-start.html](https://www.elven.tools/docs/jump-start.html)
-- Intro video: [www.youtu.be/resGP6a7_34](https://youtu.be/resGP6a7_34)
+- Intro video: [www.youtu.be/Jou5jn8PFz8](https://youtu.be/Jou5jn8PFz8)
 
 Be aware that the Smart Contract doesn't have any audits. It has complete functionality for the first version, but it still needs some improvements. Test it first on the devnet/testnet.
 
