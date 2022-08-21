@@ -220,7 +220,7 @@ pub trait ElvenTools {
     // As an owner of the smart contract, you can send randomly minted NFTs to chosen addresses.
     #[only_owner]
     #[endpoint(giveaway)]
-    fn giveaway(&self, address: ManagedAddress, amount_of_tokens: u32) {
+    fn giveaway(&self, addresses: ManagedVec<ManagedAddress>, amount_of_tokens_per_address: u32) {
         require!(!self.nft_token_id().is_empty(), "Token not issued!");
 
         let token = self.nft_token_id().get();
@@ -232,12 +232,14 @@ pub trait ElvenTools {
         );
 
         require!(
-            self.get_current_left_tokens_amount() >= amount_of_tokens,
+            self.get_current_left_tokens_amount() >= amount_of_tokens_per_address * addresses.len() as u32,
             "All tokens have been minted already or the amount you want to mint is too much. Check limits! (totally or per drop)!"
         );
 
-        for _ in 0..amount_of_tokens {
-            self.mint_single_nft(BigUint::zero(), OptionalValue::Some(address.clone()));
+        for address in addresses.into_iter() {
+            for _ in 0..amount_of_tokens_per_address {
+                self.mint_single_nft(BigUint::zero(), OptionalValue::Some(address.clone()));
+            }
         }
     }
 
