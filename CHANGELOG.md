@@ -1,3 +1,6 @@
+### [1.9.0](https://github.com/ElvenTools/elven-nft-minter-sc/releases/tag/v1.9.0) (2022-08-27)
+- giveaway changes, now it works with multiple addresses, Elven Tools CLI is adjusted to support entering them by hand or using the input JSON file
+
 ### [1.8.0](https://github.com/ElvenTools/elven-nft-minter-sc/releases/tag/v1.8.0) (2022-07-30)
 - elrond-wasm framework update to 0.34.1
 - added `#[only_user_account]` for some of the endpoints, we want to allow only user interactions there

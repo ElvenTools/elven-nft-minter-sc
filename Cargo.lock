@@ -224,7 +224,7 @@ dependencies = [
 
 [[package]]
 name = "elven-nft-minter"
-version = "1.8.0"
+version = "1.9.0"
 dependencies = [
  "elrond-wasm",
  "elrond-wasm-debug",

@@ -9,8 +9,8 @@
         },
         "contractCrate": {
             "name": "elven-nft-minter",
-            "version": "1.8.0",
-            "git_version": "a12480f-modified"
+            "version": "1.9.0",
+            "git_version": "76512cc-modified"
         },
         "framework": {
             "name": "elrond-wasm",
@@ -183,11 +183,11 @@
             "mutability": "mutable",
             "inputs": [
                 {
-                    "name": "address",
-                    "type": "Address"
+                    "name": "addresses",
+                    "type": "List<Address>"
                 },
                 {
-                    "name": "amount_of_tokens",
+                    "name": "amount_of_tokens_per_address",
                     "type": "u32"
                 }
             ],
