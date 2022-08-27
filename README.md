@@ -7,28 +7,25 @@
 
 Be aware that the Smart Contract doesn't have any audits. It has complete functionality for the first version, but it still needs some improvements. Test it first on the devnet/testnet.
 
-**You can use [elven-tools-cli](https://github.com/ElvenTools/elven-tools-cli) for deployment and interactions!**
+**You can use [elven-tools-cli](https://github.com/ElvenTools/elven-tools-cli) for deployment, setup and interactions!**
 
-**You can use [elven-tools-dapp](https://github.com/ElvenTools/elven-tools-dapp) as your frontend dapp for minting process! (NextJS based app)**
-
-### Tracking the progress
-
-- [Elven Tools Smart Contract kanban](https://github.com/orgs/ElvenTools/projects/4)
+**You can use [elven-tools-dapp](https://github.com/ElvenTools/elven-tools-dapp) as your frontend dapp for minting process! (NextJS based app with 4 auth providers)**
 
 ### What is it?
 
 You are reading about the Smart Contract designed for the Elrond blockchain. Its primary purpose is to provide a simple logic for minting and buying a previously configured collection of NFTs. It does it in a randomized way. Version 1 of it supports:
 
 - issuing the collection token
-- setting the create role
+- setting the proper roles
 - pausing/unpausing the process
 - random mint and distribution
 - minting multiple NFTs in one transaction
-- giveaway options
-- possibility to split the process into drops/waves/batches, here it is called 'drop'
-- configuring the allowlist
+- giveaway options + multiple addresses distribution in one transaction
+- possibility to split the process into drops (waves/batches). It is named 'drop'
+- configuring the allowlist, populate from a file or provide by hand
 - claiming the developer rewards
 - changing basic setup where it is possible
+- and more...
 
 Start here: [Elven Tools Jumpstart](https://www.elven.tools/docs/jump-start.html)
 
@@ -46,9 +43,11 @@ For all commands, check out the docs: [www.elven.tools/docs/sc-endpoints.html](h
 
 ### Other ways of using it
 
-You can always clone it and change it as you need. The best is to use the Elven Tools CLI tool, which can also be configured after changes. But nothing stops you from using the [erdpy](https://docs.elrond.com/sdk-and-tools/erdpy/erdpy/) and interacting with this Smart Contract. It is all up to you.
+You can always clone it and change it as you need. The best is to use the Elven Tools CLI tool, which can also be configured after changes. But nothing stops you from using the [erdpy](https://docs.elrond.com/sdk-and-tools/erdpy/erdpy/). It is all up to you. Of course you will need to do more work when using the erdpy.
 
-**Rust devs, I would appreciate it if you could leave your insights ❤️**
+### Tracking the progress
+
+- [Elven Tools Smart Contract kanban](https://github.com/orgs/ElvenTools/projects/4)
 
 ### Contact
 
@@ -57,8 +56,10 @@ You can always clone it and change it as you need. The best is to use the Elven 
 
 ### You may also like
 
+- [elven.js](https://github.com/juliancwirko/elven.js) - simplified wrapper over erdjs, designed to work as a plug-n-play solution for browser based use cases. No build steps and frameworks, just one file to rule it all! Check usage examples!
 - [NFT Art Maker](https://github.com/juliancwirko/nft-art-maker) - generates images and metadata files and packs them into CAR files, all from provided PNG layers.
 - [Buildo Begins](https://github.com/ElrondDevGuild/buildo-begins) - CLI toolset for interacting with the Elrond blockchain, APIs and smart contracts
+- [Export collection owners to CSV](https://github.com/ElvenTools/elven-tools-collection-owners-csv)
 
 ### Issues and ideas
 
