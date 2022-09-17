@@ -74,6 +74,7 @@ pub trait ElvenTools {
         &self,
         collection_token_name: ManagedBuffer,
         collection_token_ticker: ManagedBuffer,
+        is_not_number_in_name: OptionalValue<bool>,
         nft_token_name: OptionalValue<ManagedBuffer>,
     ) {
         let issue_cost = self.call_value().egld_value();
@@ -83,6 +84,9 @@ pub trait ElvenTools {
             OptionalValue::Some(name) => name,
             OptionalValue::None => ManagedBuffer::new_from_bytes(b""),
         };
+
+        self.no_number_in_nft_name()
+            .set(is_not_number_in_name.into_option().unwrap_or_default());
 
         if nfts_name.len() != 0 {
             self.nft_token_name().set(&nfts_name);
@@ -602,12 +606,17 @@ pub trait ElvenTools {
             token_name_from_storage = self.collection_token_name().get();
         }
 
-        let token_index = self.decimal_to_ascii(index_to_mint.try_into().unwrap());
-        let hash_sign = ManagedBuffer::new_from_bytes(" #".as_bytes());
+        let no_number_in_name = self.no_number_in_nft_name().get();
 
         full_token_name.append(&token_name_from_storage);
-        full_token_name.append(&hash_sign);
-        full_token_name.append(&token_index);
+
+        if !no_number_in_name {
+            let token_index = self.decimal_to_ascii(index_to_mint.try_into().unwrap());
+            let hash_and_space_sign = ManagedBuffer::new_from_bytes(" #".as_bytes());
+
+            full_token_name.append(&hash_and_space_sign);
+            full_token_name.append(&token_index);
+        }
 
         full_token_name
     }
@@ -790,4 +799,7 @@ pub trait ElvenTools {
 
     #[storage_mapper("isMetadataInUris")]
     fn is_metadata_in_uris(&self) -> SingleValueMapper<bool>;
+
+    #[storage_mapper("noNumberInNftName")]
+    fn no_number_in_nft_name(&self) -> SingleValueMapper<bool>;
 }

@@ -9,8 +9,8 @@
         },
         "contractCrate": {
             "name": "elven-nft-minter",
-            "version": "1.9.0",
-            "git_version": "76512cc-modified"
+            "version": "1.10.0",
+            "git_version": "c8a1569-modified"
         },
         "framework": {
             "name": "elrond-wasm",
@@ -83,6 +83,11 @@
                 {
                     "name": "collection_token_ticker",
                     "type": "bytes"
+                },
+                {
+                    "name": "is_not_number_in_name",
+                    "type": "optional<bool>",
+                    "multi_arg": true
                 },
                 {
                     "name": "nft_token_name",

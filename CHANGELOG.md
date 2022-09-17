@@ -1,3 +1,6 @@
+### [1.10.0](https://github.com/ElvenTools/elven-nft-minter-sc/releases/tag/v1.10.0) (2022-09-18)
+- The number of the edition in the NFT name is now optional. It will be used by default, but you can opt-out (example: "nft_name #12" when there is 12.png and 12.json. When disabled: "nft_name")
+
 ### [1.9.0](https://github.com/ElvenTools/elven-nft-minter-sc/releases/tag/v1.9.0) (2022-08-27)
 - giveaway changes, now it works with multiple addresses, Elven Tools CLI is adjusted to support entering them by hand or using the input JSON file
 
