@@ -13,7 +13,7 @@ Be aware that the Smart Contract doesn't have any audits. It has complete functi
 
 ### What is it?
 
-You are reading about the Smart Contract designed for the Elrond blockchain. Its primary purpose is to provide a simple logic for minting and buying a previously configured collection of NFTs. It does it in a randomized way. Version 1 of it supports:
+You are reading about the Smart Contract designed for the MultiversX (Elrond) blockchain. Its primary purpose is to provide a simple logic for minting and buying a previously configured collection of NFTs. It does it in a randomized way. Version 1 of it supports:
 
 - issuing the collection token
 - setting the proper roles
@@ -22,7 +22,7 @@ You are reading about the Smart Contract designed for the Elrond blockchain. Its
 - minting multiple NFTs in one transaction
 - giveaway options + multiple addresses distribution in one transaction
 - possibility to split the process into drops (waves/batches). It is named 'drop'
-- configuring the allowlist, populate from a file or provide by hand
+- configuring the allowlist, populating from a file or providing by hand
 - claiming the developer rewards
 - changing basic setup where it is possible
 - and more...
@@ -35,7 +35,7 @@ Also, check how simple it is to deploy and interact with it using [elven-tools-c
 
 ### Check out possible workflows
 
-Examples of how you can configure your Smart Contract in a couple of scenarios and how to use the CLI to do this faster and more efficient: [www.elven.tools/docs/elven-tools-workflows.html](https://www.elven.tools/docs/elven-tools-workflows.html)
+Examples of how you can configure your Smart Contract in a couple of scenarios and how to use the CLI to do this faster and more efficiently: [www.elven.tools/docs/elven-tools-workflows.html](https://www.elven.tools/docs/elven-tools-workflows.html)](https://www.elven.tools/docs/elven-tools-workflows.html)
 
 ### All endpoints with short descriptions
 
@@ -43,7 +43,7 @@ For all commands, check out the docs: [www.elven.tools/docs/sc-endpoints.html](h
 
 ### Other ways of using it
 
-You can always clone it and change it as you need. The best is to use the Elven Tools CLI tool, which can also be configured after changes. But nothing stops you from using the [erdpy](https://docs.elrond.com/sdk-and-tools/erdpy/erdpy/). It is all up to you. Of course you will need to do more work when using the erdpy.
+You can always clone it and change it as you need. The best is to use the Elven Tools CLI tool, which can also be configured after changes. But nothing stops you from using the [erdpy](https://docs.elrond.com/sdk-and-tools/erdpy/erdpy/). It is all up to you. Of course, you will need to do more work when using the erdpy.
 
 ### Tracking the progress
 
@@ -51,14 +51,13 @@ You can always clone it and change it as you need. The best is to use the Elven 
 
 ### Contact
 
-- [Telegram](https://t.me/juliancwirko)
 - [Twitter](https://twitter.com/JulianCwirko)
 
 ### You may also like
 
 - [elven.js](https://github.com/juliancwirko/elven.js) - simplified wrapper over erdjs, designed to work as a plug-n-play solution for browser based use cases. No build steps and frameworks, just one file to rule it all! Check usage examples!
 - [NFT Art Maker](https://github.com/juliancwirko/nft-art-maker) - generates images and metadata files and packs them into CAR files, all from provided PNG layers.
-- [Buildo Begins](https://github.com/ElrondDevGuild/buildo-begins) - CLI toolset for interacting with the Elrond blockchain, APIs and smart contracts
+- [Buildo Begins](https://github.com/xdevguild/buildo-begins) - CLI toolset for interacting with the MultiversX (Elrond) blockchain, APIs and smart contracts
 - [Export collection owners to CSV](https://github.com/ElvenTools/elven-tools-collection-owners-csv)
 
 ### Issues and ideas

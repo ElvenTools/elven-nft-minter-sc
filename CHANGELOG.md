@@ -1,3 +1,6 @@
+### [1.11.0](https://github.com/ElvenTools/elven-nft-minter-sc/releases/tag/v1.11.0) (2023-01-06)
+- elrond-wasm framework update to 0.38.0
+
 ### [1.10.0](https://github.com/ElvenTools/elven-nft-minter-sc/releases/tag/v1.10.0) (2022-09-18)
 - The number of the edition in the NFT name is now optional. It will be used by default, but you can opt-out (example: "nft_name #12" when there is 12.png and 12.json. When disabled: "nft_name")
 

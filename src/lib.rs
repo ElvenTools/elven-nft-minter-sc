@@ -1,7 +1,5 @@
 #![no_std]
 
-use core::convert::TryInto;
-
 const NFT_AMOUNT: u32 = 1;
 const ROYALTIES_MAX: u32 = 10_000;
 // This is the most popular gateway, but it doesn't matter the most important is IPFS CID
@@ -104,6 +102,7 @@ pub trait ElvenTools {
                     can_freeze: false,
                     can_wipe: false,
                     can_pause: false,
+                    can_transfer_create_role: false,
                     can_change_owner: false,
                     can_upgrade: false,
                     can_add_special_roles: true,
@@ -480,7 +479,7 @@ pub trait ElvenTools {
         let uid = self.tokens_left_to_mint();
 
         let uid_len = uid.len();
-        let mut rand_source = RandomnessSource::<Self::Api>::new();
+        let mut rand_source = RandomnessSource::new();
 
         let index = rand_source.next_usize_in_range(1, uid_len + 1);
 
