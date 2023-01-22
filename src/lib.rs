@@ -11,10 +11,10 @@ const URI_SLASH: &[u8] = "/".as_bytes();
 const TAGS_KEY_NAME: &[u8] = "tags:".as_bytes();
 const DEFAULT_IMG_FILE_EXTENSION: &[u8] = ".png".as_bytes();
 
-elrond_wasm::imports!();
-elrond_wasm::derive_imports!();
+multiversx_sc::imports!();
+multiversx_sc::derive_imports!();
 
-#[elrond_wasm::contract]
+#[multiversx_sc::contract]
 pub trait ElvenTools {
     #[init]
     fn init(

@@ -1,3 +1,6 @@
+### [1.12.0](https://github.com/ElvenTools/elven-nft-minter-sc/releases/tag/v1.12.0) (2023-01-22)
+- replace elrond (old) dependencies with new ones
+
 ### [1.11.0](https://github.com/ElvenTools/elven-nft-minter-sc/releases/tag/v1.11.0) (2023-01-06)
 - elrond-wasm framework update to 0.38.0
 

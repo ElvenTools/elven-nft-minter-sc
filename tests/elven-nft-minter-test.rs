@@ -1,9 +1,6 @@
-use elrond_wasm::{
-    elrond_codec::multi_types::OptionalValue,
-    types::{Address, BigUint, ManagedBuffer},
-};
-use elrond_wasm_debug::{rust_biguint, testing_framework::*, DebugApi};
 use elven_nft_minter::*;
+use multiversx_sc::{types::{Address, BigUint, ManagedBuffer}, codec::multi_types::OptionalValue};
+use multiversx_sc_scenario::{rust_biguint, testing_framework::*, DebugApi};
 
 const WASM_PATH: &'static str = "output/elven-nft-minter.wasm";
 
@@ -63,8 +60,6 @@ where
         })
         .assert_ok();
 
-    blockchain_wrapper.add_mandos_set_account(em_wrapper.address_ref());
-
     ElvenNftMinterSetup {
         blockchain_wrapper,
         owner_address,
@@ -77,9 +72,7 @@ where
 #[test]
 fn init_test() {
     let em_setup = setup_elven_nft_minter(elven_nft_minter::contract_obj);
-    em_setup
-        .blockchain_wrapper
-        .write_mandos_output("_generated_init.scen.json");
+    em_setup.blockchain_wrapper;
 }
 
-// TODO: just an initial state, write better tests
+// TODO: just an initial state, write tests
