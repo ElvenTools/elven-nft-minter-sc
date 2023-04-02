@@ -11,6 +11,8 @@ Be aware that the Smart Contract doesn't have any audits. It has complete functi
 
 **You can use [elven-tools-dapp](https://github.com/ElvenTools/elven-tools-dapp) as your frontend dapp for minting process! (NextJS based app with 4 auth providers)**
 
+**Also check [elven-tools-sft-minter-sc](https://github.com/ElvenTools/elven-tools-sft-minter-sc) - SFT minter and vending machine smart contract**
+
 ### What is it?
 
 You are reading about the Smart Contract designed for the MultiversX blockchain. Its primary purpose is to provide a simple logic for minting and buying a previously configured collection of NFTs. It does it in a randomized way. Version 1 of it supports:
