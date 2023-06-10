@@ -1,6 +1,6 @@
 [package]
 name = "elven-nft-minter-wasm"
-version = "1.12.0"
+version = "1.13.0"
 authors = ["Julian Ćwirko <julian.io>"]
 edition = "2021"
 publish = false
@@ -19,7 +19,7 @@ panic = "abort"
 path = ".."
 
 [dependencies.multiversx-sc-wasm-adapter]
-version = "0.39.2"
+version = "0.41.2"
 
 [workspace]
 members = ["."]

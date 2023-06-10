@@ -57,7 +57,7 @@ You can always clone it and change it as you need. The best is to use the Elven 
 
 ### You may also like
 
-- [elven.js](https://github.com/juliancwirko/elven.js) - simplified wrapper over JS SDK, designed to work as a plug-n-play solution for browser based use cases. No build steps and frameworks, just one file to rule it all! Check usage examples!
+- [elven.js](https://github.com/elven-js/elven.js) - simplified wrapper over JS SDK, designed to work as a plug-n-play solution for browser based use cases. No build steps and frameworks, just one file to rule it all! Check usage examples!
 - [NFT Art Maker](https://github.com/juliancwirko/nft-art-maker) - generates images and metadata files and packs them into CAR files, all from provided PNG layers.
 - [Buildo Begins](https://github.com/xdevguild/buildo-begins) - CLI toolset for interacting with the MultiversX blockchain, APIs and smart contracts
 - [Export collection owners to CSV](https://github.com/ElvenTools/elven-tools-collection-owners-csv)

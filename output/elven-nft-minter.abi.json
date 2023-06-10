@@ -1,19 +1,19 @@
 {
     "buildInfo": {
         "rustc": {
-            "version": "1.68.0-nightly",
-            "commitHash": "5ce39f42bd2c8bca9c570f0560ebe1fce4eddb14",
-            "commitDate": "2023-01-20",
+            "version": "1.72.0-nightly",
+            "commitHash": "43062c43d2a63cf4e261c6eddc417575c4f3062f",
+            "commitDate": "2023-06-09",
             "channel": "Nightly",
-            "short": "rustc 1.68.0-nightly (5ce39f42b 2023-01-20)"
+            "short": "rustc 1.72.0-nightly (43062c43d 2023-06-09)"
         },
         "contractCrate": {
             "name": "elven-nft-minter",
-            "version": "1.12.0"
+            "version": "1.13.0"
         },
         "framework": {
             "name": "multiversx-sc",
-            "version": "0.39.2"
+            "version": "0.41.2"
         }
     },
     "name": "ElvenTools",

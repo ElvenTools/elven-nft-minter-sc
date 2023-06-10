@@ -1,6 +1,6 @@
 [package]
 name = "elven-nft-minter-meta"
-version = "1.12.0"
+version = "1.13.0"
 authors = ["Julian Ćwirko <julian.io>"]
 edition = "2021"
 publish = false
@@ -9,4 +9,4 @@ publish = false
 path = ".."
 
 [dependencies.multiversx-sc-meta]
-version = "0.39.2"
+version = "0.41.2"
