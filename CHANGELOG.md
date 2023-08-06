@@ -1,4 +1,4 @@
-### [1.13.0](https://github.com/ElvenTools/elven-nft-minter-sc/releases/tag/v1.13.0) (2023-06-10)
+### [1.13.0](https://github.com/ElvenTools/elven-nft-minter-sc/releases/tag/v1.13.0) (2023-...)
 - update multiversx-sc dependencies
 
 ### [1.12.0](https://github.com/ElvenTools/elven-nft-minter-sc/releases/tag/v1.12.0) (2023-01-22)

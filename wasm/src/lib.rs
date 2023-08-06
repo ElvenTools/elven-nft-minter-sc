@@ -18,42 +18,44 @@ multiversx_sc_wasm_adapter::panic_handler!();
 multiversx_sc_wasm_adapter::endpoints! {
     elven_nft_minter
     (
-        issueToken
-        setLocalRoles
-        pauseMinting
-        startMinting
-        setDrop
-        unsetDrop
-        setNewPrice
-        changeBaseCids
-        setNewTokensLimitPerAddress
-        giveaway
-        claimScFunds
-        enableAllowlist
-        disableAllowlist
-        populateAllowlist
-        clearAllowlist
-        removeAllowlistAddress
-        mint
-        shuffle
-        getDropTokensLeft
-        getTotalTokensLeft
-        getMintedPerAddressPerDrop
-        getAllowlistAddressCheck
-        getAllowlistSize
-        getNftTokenId
-        getCollectionTokenName
-        getNftTokenName
-        getNftPrice
-        getProvenanceHash
-        getTokensLimitPerAddressTotal
-        getMintedPerAddressTotal
-        getTokensLimitPerAddressPerDrop
-        isAllowlistEnabled
-        isDropActive
-        getTotalSupply
-        isMintingPaused
-        getTotalSupplyOfCurrentDrop
-        callBack
+        init => init
+        issueToken => issue_token
+        setLocalRoles => set_local_roles
+        pauseMinting => pause_minting
+        startMinting => start_minting
+        setDrop => set_drop
+        unsetDrop => unset_drop
+        setNewPrice => set_new_price
+        changeBaseCids => change_base_cids
+        setNewTokensLimitPerAddress => set_new_tokens_limit_per_address
+        giveaway => giveaway
+        claimScFunds => claim_sc_funds
+        enableAllowlist => enable_allowlist
+        disableAllowlist => disable_allowlist
+        populateAllowlist => populate_allowlist
+        clearAllowlist => clear_allowlist
+        removeAllowlistAddress => remove_allowlist_address
+        mint => mint
+        shuffle => shuffle
+        getDropTokensLeft => drop_tokens_left
+        getTotalTokensLeft => total_tokens_left
+        getMintedPerAddressPerDrop => get_minted_per_address_per_drop
+        getAllowlistAddressCheck => allowlist_address_check
+        getAllowlistSize => allowlist_size
+        getNftTokenId => nft_token_id
+        getCollectionTokenName => collection_token_name
+        getNftTokenName => nft_token_name
+        getNftPrice => selling_price
+        getProvenanceHash => provenance_hash
+        getTokensLimitPerAddressTotal => tokens_limit_per_address_total
+        getMintedPerAddressTotal => minted_per_address_total
+        getTokensLimitPerAddressPerDrop => tokens_limit_per_address_per_drop
+        isAllowlistEnabled => is_allowlist_enabled
+        isDropActive => is_drop_active
+        getTotalSupply => amount_of_tokens_total
+        isMintingPaused => paused
+        getTotalSupplyOfCurrentDrop => amount_of_tokens_per_drop
     )
 }
+
+multiversx_sc_wasm_adapter::async_callback! { elven_nft_minter }
