@@ -95,7 +95,7 @@ pub trait ElvenTools {
         self.send()
             .esdt_system_sc_proxy()
             .issue_non_fungible(
-                issue_cost,
+                issue_cost.clone_value(),
                 &collection_token_name,
                 &collection_token_ticker,
                 NonFungibleTokenProperties {
@@ -367,7 +367,7 @@ pub trait ElvenTools {
             );
         }
 
-        let single_payment_amount = payment_amount / amount_of_tokens;
+        let single_payment_amount = payment_amount.clone_value() / amount_of_tokens;
 
         let price_tag = self.selling_price().get();
         require!(
