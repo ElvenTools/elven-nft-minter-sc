@@ -9,11 +9,11 @@
         },
         "contractCrate": {
             "name": "elven-nft-minter",
-            "version": "1.13.0"
+            "version": "1.14.0"
         },
         "framework": {
             "name": "multiversx-sc",
-            "version": "0.42.0"
+            "version": "0.45.1"
         }
     },
     "name": "ElvenTools",
@@ -68,6 +68,141 @@
     },
     "endpoints": [
         {
+            "name": "getNftTokenId",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "TokenIdentifier"
+                }
+            ]
+        },
+        {
+            "name": "getCollectionTokenName",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "bytes"
+                }
+            ]
+        },
+        {
+            "name": "getNftTokenName",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "bytes"
+                }
+            ]
+        },
+        {
+            "name": "getNftPrice",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "BigUint"
+                }
+            ]
+        },
+        {
+            "name": "getProvenanceHash",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "bytes"
+                }
+            ]
+        },
+        {
+            "name": "getTokensLimitPerAddressTotal",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "u32"
+                }
+            ]
+        },
+        {
+            "name": "getMintedPerAddressTotal",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "address",
+                    "type": "Address"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "u32"
+                }
+            ]
+        },
+        {
+            "name": "getTokensLimitPerAddressPerDrop",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "u32"
+                }
+            ]
+        },
+        {
+            "name": "isAllowlistEnabled",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "bool"
+                }
+            ]
+        },
+        {
+            "name": "isDropActive",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "bool"
+                }
+            ]
+        },
+        {
+            "name": "getTotalSupply",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "u32"
+                }
+            ]
+        },
+        {
+            "name": "isMintingPaused",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "bool"
+                }
+            ]
+        },
+        {
+            "name": "getTotalSupplyOfCurrentDrop",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "u32"
+                }
+            ]
+        },
+        {
             "name": "issueToken",
             "onlyOwner": true,
             "mutability": "mutable",
@@ -85,16 +220,20 @@
                 },
                 {
                     "name": "is_not_number_in_name",
-                    "type": "optional<bool>",
-                    "multi_arg": true
+                    "type": "bool"
                 },
                 {
                     "name": "nft_token_name",
-                    "type": "optional<bytes>",
+                    "type": "bytes"
+                },
+                {
+                    "name": "token_properties",
+                    "type": "optional<variadic<NFTProperties>>",
                     "multi_arg": true
                 }
             ],
-            "outputs": []
+            "outputs": [],
+            "allow_multiple_var_args": true
         },
         {
             "name": "setLocalRoles",
@@ -328,144 +467,43 @@
                     "type": "u32"
                 }
             ]
-        },
-        {
-            "name": "getNftTokenId",
-            "mutability": "readonly",
-            "inputs": [],
-            "outputs": [
+        }
+    ],
+    "esdtAttributes": [],
+    "hasCallback": true,
+    "types": {
+        "NFTProperties": {
+            "type": "enum",
+            "variants": [
                 {
-                    "type": "TokenIdentifier"
-                }
-            ]
-        },
-        {
-            "name": "getCollectionTokenName",
-            "mutability": "readonly",
-            "inputs": [],
-            "outputs": [
+                    "name": "CanFreeze",
+                    "discriminant": 0
+                },
                 {
-                    "type": "bytes"
-                }
-            ]
-        },
-        {
-            "name": "getNftTokenName",
-            "mutability": "readonly",
-            "inputs": [],
-            "outputs": [
+                    "name": "CanWipe",
+                    "discriminant": 1
+                },
                 {
-                    "type": "bytes"
-                }
-            ]
-        },
-        {
-            "name": "getNftPrice",
-            "mutability": "readonly",
-            "inputs": [],
-            "outputs": [
+                    "name": "CanPause",
+                    "discriminant": 2
+                },
                 {
-                    "type": "BigUint"
-                }
-            ]
-        },
-        {
-            "name": "getProvenanceHash",
-            "mutability": "readonly",
-            "inputs": [],
-            "outputs": [
+                    "name": "CanTransferCreateRole",
+                    "discriminant": 3
+                },
                 {
-                    "type": "bytes"
-                }
-            ]
-        },
-        {
-            "name": "getTokensLimitPerAddressTotal",
-            "mutability": "readonly",
-            "inputs": [],
-            "outputs": [
+                    "name": "CanChangeOwner",
+                    "discriminant": 4
+                },
                 {
-                    "type": "u32"
-                }
-            ]
-        },
-        {
-            "name": "getMintedPerAddressTotal",
-            "mutability": "readonly",
-            "inputs": [
+                    "name": "CanUpgrade",
+                    "discriminant": 5
+                },
                 {
-                    "name": "address",
-                    "type": "Address"
-                }
-            ],
-            "outputs": [
-                {
-                    "type": "u32"
-                }
-            ]
-        },
-        {
-            "name": "getTokensLimitPerAddressPerDrop",
-            "mutability": "readonly",
-            "inputs": [],
-            "outputs": [
-                {
-                    "type": "u32"
-                }
-            ]
-        },
-        {
-            "name": "isAllowlistEnabled",
-            "mutability": "readonly",
-            "inputs": [],
-            "outputs": [
-                {
-                    "type": "bool"
-                }
-            ]
-        },
-        {
-            "name": "isDropActive",
-            "mutability": "readonly",
-            "inputs": [],
-            "outputs": [
-                {
-                    "type": "bool"
-                }
-            ]
-        },
-        {
-            "name": "getTotalSupply",
-            "mutability": "readonly",
-            "inputs": [],
-            "outputs": [
-                {
-                    "type": "u32"
-                }
-            ]
-        },
-        {
-            "name": "isMintingPaused",
-            "mutability": "readonly",
-            "inputs": [],
-            "outputs": [
-                {
-                    "type": "bool"
-                }
-            ]
-        },
-        {
-            "name": "getTotalSupplyOfCurrentDrop",
-            "mutability": "readonly",
-            "inputs": [],
-            "outputs": [
-                {
-                    "type": "u32"
+                    "name": "CanAddSpecialRoles",
+                    "discriminant": 6
                 }
             ]
         }
-    ],
-    "events": [],
-    "hasCallback": true,
-    "types": {}
+    }
 }

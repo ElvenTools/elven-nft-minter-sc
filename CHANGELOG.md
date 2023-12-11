@@ -1,3 +1,9 @@
+### [1.14.0](https://github.com/ElvenTools/elven-nft-minter-sc/releases/tag/v1.14.0) (2023-12-11)
+- update multiversx-sc dependencies
+- initial refactoring
+- add a possibility to define collection properties
+- changes in arguments for issue_token
+
 ### [1.13.0](https://github.com/ElvenTools/elven-nft-minter-sc/releases/tag/v1.13.0) (2023-08-09)
 - update multiversx-sc dependencies
 
