@@ -15,6 +15,15 @@ pub enum NFTProperties {
     CanAddSpecialRoles,
 }
 
+#[derive(TypeAbi, TopEncode, TopDecode)]
+pub enum NFTRoles {
+    ESDTRoleNFTCreate,
+    ESDTRoleNFTBurn,
+    ESDTRoleNFTUpdateAttributes,
+    ESDTRoleNFTAddURI,
+    ESDTTransferRole,
+}
+
 #[multiversx_sc::module]
 pub trait Setup: storage::Storage + operations::Operations {
     // Issue main collection token/handler
@@ -36,7 +45,7 @@ pub trait Setup: storage::Storage + operations::Operations {
         let mut nfts_name = nft_token_name;
 
         if nfts_name.is_empty() {
-          nfts_name = collection_token_name.clone();
+            nfts_name = collection_token_name.clone();
         }
 
         self.no_number_in_nft_name().set(is_not_number_in_name);
@@ -91,15 +100,38 @@ pub trait Setup: storage::Storage + operations::Operations {
 
     #[only_owner]
     #[endpoint(setLocalRoles)]
-    fn set_local_roles(&self) {
+    fn set_local_roles(&self, token_roles: OptionalValue<MultiValueEncoded<NFTRoles>>) {
         require!(!self.nft_token_id().is_empty(), "Token not issued!");
+
+        let mut roles: ManagedVec<EsdtLocalRole> = ManagedVec::new();
+        let roles_option = token_roles.into_option();
+
+        match roles_option {
+            Some(value) => {
+                for token_role in value.into_iter() {
+                    match token_role {
+                        NFTRoles::ESDTRoleNFTCreate => roles.push(EsdtLocalRole::NftCreate),
+                        NFTRoles::ESDTRoleNFTBurn => roles.push(EsdtLocalRole::NftBurn),
+                        NFTRoles::ESDTRoleNFTUpdateAttributes => {
+                            roles.push(EsdtLocalRole::NftUpdateAttributes)
+                        }
+                        NFTRoles::ESDTRoleNFTAddURI => roles.push(EsdtLocalRole::NftAddUri),
+                        NFTRoles::ESDTTransferRole => roles.push(EsdtLocalRole::Transfer),
+                    }
+                }
+            }
+            // When not prvided NftCreate is required role to proceed
+            None => {
+                roles.push(EsdtLocalRole::NftCreate);
+            }
+        }
 
         self.send()
             .esdt_system_sc_proxy()
             .set_special_roles(
                 &self.blockchain().get_sc_address(),
                 &self.nft_token_id().get(),
-                (&[EsdtLocalRole::NftCreate][..]).into_iter().cloned(),
+                roles.iter(),
             )
             .async_call()
             .call_and_exit();

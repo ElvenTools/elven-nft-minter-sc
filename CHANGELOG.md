@@ -1,3 +1,7 @@
+### [1.15.0](https://github.com/ElvenTools/elven-nft-minter-sc/releases/tag/v1.15.0) (2024-01-06)
+- add the possibility of managing special roles
+- update multiversx-sc dependencies
+
 ### [1.14.0](https://github.com/ElvenTools/elven-nft-minter-sc/releases/tag/v1.14.0) (2023-12-11)
 - update multiversx-sc dependencies
 - initial refactoring

@@ -5,12 +5,14 @@
 ////////////////////////////////////////////////////
 
 // Init:                                 1
-// Endpoints:                           36
+// Endpoints:                           37
 // Async Callback:                       1
-// Total number of exported functions:  38
+// Total number of exported functions:  39
 
 #![no_std]
-#![allow(internal_features)]
+
+// Configuration that works with rustc < 1.73.0.
+// TODO: Recommended rustc version: 1.73.0 or newer.
 #![feature(lang_items)]
 
 multiversx_sc_wasm_adapter::allocator!();
@@ -20,6 +22,7 @@ multiversx_sc_wasm_adapter::endpoints! {
     elven_nft_minter
     (
         init => init
+        upgrade => upgrade
         getNftTokenId => nft_token_id
         getCollectionTokenName => collection_token_name
         getNftTokenName => nft_token_name

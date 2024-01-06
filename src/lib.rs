@@ -60,4 +60,7 @@ pub trait ElvenTools: storage::Storage + setup::Setup + operations::Operations {
         let paused = true;
         self.paused().set_if_empty(&paused);
     }
+
+    #[upgrade]
+    fn upgrade(&self) {}
 }
